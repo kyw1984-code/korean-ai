@@ -1,43 +1,27 @@
-import { View, Text, ScrollView, TouchableOpacity, StyleSheet, Alert } from 'react-native';
+import { View, Text, ScrollView, TouchableOpacity, StyleSheet, ActivityIndicator } from 'react-native';
 import { router } from 'expo-router';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useSubscriptionStore } from '../stores/useSubscriptionStore';
+import { useSubscription } from '../hooks/useSubscription';
 import { Colors } from '../constants/Colors';
 import { Strings } from '../constants/Strings';
 
 export default function PaywallScreen() {
-  const setTier = useSubscriptionStore((s) => s.setTier);
+  const { isLoading } = useSubscriptionStore();
+  const { subscribePro, buyAdFree, restore } = useSubscription();
 
-  function handlePro() {
-    // RevenueCat purchase flow will go here
-    Alert.alert('Pro Subscription', 'RevenueCat integration coming soon! Activating Pro for testing.', [
-      {
-        text: 'Activate (Test)',
-        onPress: () => {
-          const expiresAt = Date.now() + 30 * 24 * 60 * 60 * 1000;
-          setTier('pro', expiresAt);
-          router.back();
-        },
-      },
-      { text: 'Cancel', style: 'cancel' },
-    ]);
+  async function handlePro(yearly = false) {
+    const success = await subscribePro(yearly);
+    if (success) router.back();
   }
 
-  function handleAdFree() {
-    Alert.alert('Remove Ads', 'RevenueCat one-time purchase coming soon! Activating for testing.', [
-      {
-        text: 'Buy (Test)',
-        onPress: () => {
-          setTier('ad_free');
-          router.back();
-        },
-      },
-      { text: 'Cancel', style: 'cancel' },
-    ]);
+  async function handleAdFree() {
+    const success = await buyAdFree();
+    if (success) router.back();
   }
 
-  function handleRestore() {
-    Alert.alert('Restore Purchases', 'Checking your purchases...');
+  async function handleRestore() {
+    await restore();
   }
 
   return (
@@ -62,14 +46,24 @@ export default function PaywallScreen() {
         </View>
 
         {/* Pro button */}
-        <TouchableOpacity style={styles.proButton} onPress={handlePro} activeOpacity={0.85}>
-          <Text style={styles.proButtonText}>{Strings.subscription.cta}</Text>
-          <Text style={styles.proPrice}>{Strings.subscription.monthly}</Text>
+        <TouchableOpacity
+          style={[styles.proButton, isLoading && styles.buttonDisabled]}
+          onPress={() => handlePro(false)}
+          activeOpacity={0.85}
+          disabled={isLoading}
+        >
+          {isLoading
+            ? <ActivityIndicator color="#FFFFFF" />
+            : <>
+                <Text style={styles.proButtonText}>{Strings.subscription.cta}</Text>
+                <Text style={styles.proPrice}>{Strings.subscription.monthly}</Text>
+              </>
+          }
         </TouchableOpacity>
 
         <View style={styles.yearlyRow}>
           <Text style={styles.yearlyText}>or </Text>
-          <TouchableOpacity onPress={handlePro}>
+          <TouchableOpacity onPress={() => handlePro(true)} disabled={isLoading}>
             <Text style={styles.yearlyLink}>{Strings.subscription.yearly}</Text>
           </TouchableOpacity>
           <View style={styles.saveBadge}>
@@ -177,4 +171,5 @@ const styles = StyleSheet.create({
   adFreeButtonText: { color: '#FFFFFF', fontSize: 15, fontWeight: '700' },
   restoreButton: { marginTop: 24 },
   restoreText: { fontSize: 14, color: Colors.light.textSecondary, textDecorationLine: 'underline' },
+  buttonDisabled: { opacity: 0.6 },
 });

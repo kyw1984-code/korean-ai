@@ -1,8 +1,9 @@
-import { View, Text, TouchableOpacity, ScrollView, StyleSheet, Alert } from 'react-native';
+import { View, Text, TouchableOpacity, ScrollView, StyleSheet } from 'react-native';
 import { router } from 'expo-router';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useUserStore } from '../../stores/useUserStore';
 import { useSubscriptionStore } from '../../stores/useSubscriptionStore';
+import { useSubscription } from '../../hooks/useSubscription';
 import { Colors } from '../../constants/Colors';
 
 const LEVELS = [
@@ -15,13 +16,10 @@ export default function SettingsScreen() {
   const profile = useUserStore((s) => s.profile);
   const setLevel = useUserStore((s) => s.setLevel);
   const { tier, isPro } = useSubscriptionStore();
+  const { restore } = useSubscription();
 
   function handleUpgrade() {
     router.push('/paywall');
-  }
-
-  function handleRestorePurchases() {
-    Alert.alert('Restore Purchases', 'Checking your purchases...');
   }
 
   return (
@@ -70,7 +68,7 @@ export default function SettingsScreen() {
         {/* Account */}
         <View style={styles.section}>
           <Text style={styles.sectionTitle}>Account</Text>
-          <TouchableOpacity style={styles.menuRow} onPress={handleRestorePurchases}>
+          <TouchableOpacity style={styles.menuRow} onPress={restore}>
             <Text style={styles.menuText}>Restore Purchases</Text>
             <Text style={styles.menuArrow}>›</Text>
           </TouchableOpacity>

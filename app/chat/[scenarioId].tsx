@@ -16,6 +16,7 @@ import { SCENARIOS } from '../../constants/Scenarios';
 import { useConversationStore } from '../../stores/useConversationStore';
 import { useUserStore } from '../../stores/useUserStore';
 import { useSubscriptionStore } from '../../stores/useSubscriptionStore';
+import { useRewardedAd } from '../../hooks/useRewardedAd';
 import { sendMessage } from '../../services/conversationService';
 import { Colors } from '../../constants/Colors';
 import { Strings } from '../../constants/Strings';
@@ -45,6 +46,7 @@ export default function ChatScreen() {
   const addMinutesUsed = useUserStore((s) => s.addMinutesUsed);
   const incrementSessions = useUserStore((s) => s.incrementSessions);
   const { isPro } = useSubscriptionStore();
+  const { isLoaded: adLoaded, isLoading: adLoading, showAd } = useRewardedAd();
 
   // Start session on mount
   useEffect(() => {
@@ -135,23 +137,25 @@ export default function ChatScreen() {
       'Watch an ad for 5 more minutes or upgrade to Pro.',
       [
         { text: 'End Session', style: 'destructive', onPress: handleEndSession },
-        { text: '+ 5 min (Ad)', onPress: handleWatchAd },
+        { text: adLoaded ? '+ 5 min (Watch Ad)' : 'Loading ad...', onPress: handleWatchAd },
         isPro() ? null : { text: 'Go Pro', onPress: () => router.push('/paywall') },
       ].filter(Boolean) as any
     );
   }
 
-  function handleWatchAd() {
-    // AdMob rewarded ad will be integrated here
-    Alert.alert('Ad', 'Ad integration coming soon! +5 minutes added for testing.', [
-      {
-        text: 'OK',
-        onPress: () => {
-          useConversationStore.getState().addTime(5 * 60);
-          addMinutesUsed(-5); // credit back
-        },
-      },
-    ]);
+  async function handleWatchAd() {
+    if (!adLoaded) {
+      Alert.alert(
+        adLoading ? 'Loading Ad...' : Strings.rewarded.noAd,
+        adLoading ? 'Please wait a moment.' : ''
+      );
+      return;
+    }
+    // showAd()가 완료되면 useRewardedAd 내부에서 addTime + addAdWatched 자동 호출
+    const shown = await showAd();
+    if (!shown) {
+      Alert.alert(Strings.errors.adNotReady);
+    }
   }
 
   function handleEndSession() {
