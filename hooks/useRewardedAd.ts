@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useRef, useCallback } from 'react';
 import {
   RewardedAd,
   RewardedAdEventType,
@@ -13,9 +13,9 @@ import { Config } from '../constants/Config';
 const adUnitId = __DEV__ ? TestIds.REWARDED : getRewardedAdUnitId();
 
 export function useRewardedAd() {
-  const [ad, setAd] = useState<RewardedAd | null>(null);
   const [isLoaded, setIsLoaded] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
+  const adRef = useRef<RewardedAd | null>(null);
   const addTime = useConversationStore((s) => s.addTime);
   const addAdWatched = useUserStore((s) => s.addAdWatched);
 
@@ -26,9 +26,9 @@ export function useRewardedAd() {
     const rewarded = RewardedAd.createForAdRequest(adUnitId, {
       requestNonPersonalizedAdsOnly: true, // GDPR 준수
     });
+    adRef.current = rewarded;
 
     const unsubscribeLoaded = rewarded.addAdEventListener(RewardedAdEventType.LOADED, () => {
-      setAd(rewarded);
       setIsLoaded(true);
       setIsLoading(false);
     });
@@ -36,20 +36,20 @@ export function useRewardedAd() {
     const unsubscribeEarned = rewarded.addAdEventListener(
       RewardedAdEventType.EARNED_REWARD,
       () => {
-        // 광고 시청 완료 → 5분 지급
         addTime(Config.freeMinutesPerAd * 60);
         addAdWatched();
       }
     );
 
+    // 광고 닫힌 후 상태 리셋 — 재귀 호출 대신 상태만 초기화
     const unsubscribeClosed = rewarded.addAdEventListener(AdEventType.CLOSED, () => {
-      setAd(null);
+      adRef.current = null;
       setIsLoaded(false);
-      // 새 광고 미리 로드
-      loadAd();
+      setIsLoading(false);
     });
 
     const unsubscribeError = rewarded.addAdEventListener(AdEventType.ERROR, () => {
+      adRef.current = null;
       setIsLoading(false);
       setIsLoaded(false);
     });
@@ -64,12 +64,15 @@ export function useRewardedAd() {
     };
   }, [isLoading, isLoaded, addTime, addAdWatched]);
 
+  // 닫힌 후 자동으로 다음 광고 미리 로드
   useEffect(() => {
-    const cleanup = loadAd();
-    return cleanup;
-  }, []);
+    if (!isLoaded && !isLoading) {
+      loadAd();
+    }
+  }, [isLoaded, isLoading, loadAd]);
 
   const showAd = useCallback(async (): Promise<boolean> => {
+    const ad = adRef.current;
     if (!ad || !isLoaded) return false;
     try {
       await ad.show();
@@ -77,7 +80,7 @@ export function useRewardedAd() {
     } catch {
       return false;
     }
-  }, [ad, isLoaded]);
+  }, [isLoaded]);
 
   return { isLoaded, isLoading, showAd };
 }

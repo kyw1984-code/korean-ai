@@ -132,15 +132,15 @@ export default function ChatScreen() {
   }
 
   function handleTimeUp() {
-    Alert.alert(
-      Strings.chat.timeUp,
-      'Watch an ad for 5 more minutes or upgrade to Pro.',
-      [
-        { text: 'End Session', style: 'destructive', onPress: handleEndSession },
-        { text: adLoaded ? '+ 5 min (Watch Ad)' : 'Loading ad...', onPress: handleWatchAd },
-        isPro() ? null : { text: 'Go Pro', onPress: () => router.push('/paywall') },
-      ].filter(Boolean) as any
-    );
+    type AlertButton = { text: string; style?: 'destructive' | 'cancel' | 'default'; onPress?: () => void };
+    const buttons: AlertButton[] = [
+      { text: 'End Session', style: 'destructive', onPress: handleEndSession },
+      { text: adLoaded ? '+ 5 min (Watch Ad)' : 'Loading ad...', onPress: handleWatchAd },
+    ];
+    if (!isPro()) {
+      buttons.push({ text: 'Go Pro', onPress: () => router.push('/paywall') });
+    }
+    Alert.alert(Strings.chat.timeUp, 'Watch an ad for 5 more minutes or upgrade to Pro.', buttons);
   }
 
   async function handleWatchAd() {
