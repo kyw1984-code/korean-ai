@@ -14,8 +14,7 @@ const LEVEL_FILTERS: Array<ScenarioLevel | 'all'> = ['all', 'beginner', 'interme
 
 function getDailyChallenge(): Scenario {
   const seed = parseInt(new Date().toISOString().split('T')[0].replace(/-/g, ''), 10);
-  const index = seed % SCENARIOS.length;
-  return SCENARIOS[index];
+  return SCENARIOS[seed % SCENARIOS.length];
 }
 
 export default function HomeScreen() {
@@ -47,34 +46,41 @@ export default function HomeScreen() {
 
   return (
     <SafeAreaView style={styles.container}>
+      {/* Header */}
       <View style={styles.header}>
         <View>
           <Text style={styles.greeting}>{t.home.greeting}</Text>
           <Text style={styles.levelBadge}>
-            Level: <Text style={styles.levelValue}>{profile?.level ?? 'beginner'}</Text>
+            <Text style={styles.levelValue}>{(profile?.level ?? 'beginner').toUpperCase()}</Text>
           </Text>
         </View>
-        <View style={styles.timerBadge}>
-          <Text style={styles.timerEmoji}>⏱️</Text>
+        <TouchableOpacity
+          style={styles.timerBadge}
+          onPress={freeMinutes <= 0 && !isPro() ? () => router.push('/paywall') : undefined}
+        >
+          <Text style={styles.timerEmoji}>⏱</Text>
           <Text style={styles.timerText}>{displayMinutes} min</Text>
-        </View>
+        </TouchableOpacity>
       </View>
 
-      {/* 오늘의 챌린지 */}
-      <TouchableOpacity style={styles.challenge} onPress={() => handleScenario(dailyChallenge)}>
+      {/* Daily Challenge */}
+      <TouchableOpacity style={styles.challenge} onPress={() => handleScenario(dailyChallenge)} activeOpacity={0.85}>
+        <View style={styles.challengeGlow} />
         <View style={styles.challengeLeft}>
-          <Text style={styles.challengeTag}>🎯 오늘의 챌린지</Text>
-          <Text style={styles.challengeTitle}>{dailyChallenge.emoji} {dailyChallenge.titleEn}</Text>
+          <Text style={styles.challengeTag}>✦  오늘의 챌린지</Text>
+          <Text style={styles.challengeTitle}>{dailyChallenge.emoji}  {dailyChallenge.titleEn}</Text>
         </View>
         <Text style={styles.challengeArrow}>›</Text>
       </TouchableOpacity>
 
+      {/* Level Filter */}
       <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.filterRow}>
         {LEVEL_FILTERS.map((f) => (
           <TouchableOpacity
             key={f}
             style={[styles.filterChip, activeFilter === f && styles.filterChipActive]}
             onPress={() => setActiveFilter(f)}
+            activeOpacity={0.7}
           >
             <Text style={[styles.filterText, activeFilter === f && styles.filterTextActive]}>
               {f === 'all' ? t.home.filterAll : LEVEL_LABELS[f]}
@@ -89,6 +95,7 @@ export default function HomeScreen() {
         numColumns={2}
         contentContainerStyle={styles.grid}
         columnWrapperStyle={styles.gridRow}
+        showsVerticalScrollIndicator={false}
         renderItem={({ item }) => (
           <ScenarioCard
             scenario={item}
@@ -118,7 +125,7 @@ function ScenarioCard({
     <TouchableOpacity
       style={[styles.card, isLocked && styles.cardLocked]}
       onPress={onPress}
-      activeOpacity={0.8}
+      activeOpacity={0.75}
     >
       {isLocked && (
         <View style={styles.lockBadge}>
@@ -127,7 +134,7 @@ function ScenarioCard({
       )}
       <Text style={styles.cardEmoji}>{scenario.emoji}</Text>
       <Text style={styles.cardTitle} numberOfLines={2}>{scenario.titleEn}</Text>
-      <View style={[styles.levelTag, { backgroundColor: LEVEL_COLORS[scenario.level] + '20' }]}>
+      <View style={[styles.levelTag, { backgroundColor: LEVEL_COLORS[scenario.level] + '18' }]}>
         <Text style={[styles.levelTagText, { color: LEVEL_COLORS[scenario.level] }]}>
           {LEVEL_LABELS[scenario.level]}
         </Text>
@@ -140,85 +147,169 @@ function ScenarioCard({
 function createStyles(colors: ThemeColors) {
   return StyleSheet.create({
     container: { flex: 1, backgroundColor: colors.background },
+
     header: {
       flexDirection: 'row',
       justifyContent: 'space-between',
       alignItems: 'center',
-      paddingHorizontal: 20,
-      paddingTop: 8,
-      paddingBottom: 16,
+      paddingHorizontal: 22,
+      paddingTop: 6,
+      paddingBottom: 18,
     },
-    greeting: { fontSize: 22, fontWeight: '800', color: colors.text },
-    levelBadge: { fontSize: 13, color: colors.textSecondary, marginTop: 2 },
-    levelValue: { color: Colors.primary, fontWeight: '700', textTransform: 'capitalize' },
+    greeting: {
+      fontSize: 24,
+      fontWeight: '800',
+      color: colors.text,
+      letterSpacing: -0.5,
+    },
+    levelBadge: {
+      fontSize: 11,
+      color: colors.textSecondary,
+      marginTop: 3,
+      letterSpacing: 1.2,
+    },
+    levelValue: {
+      color: Colors.primary,
+      fontWeight: '700',
+    },
     timerBadge: {
       flexDirection: 'row',
       alignItems: 'center',
-      backgroundColor: Colors.primary + '15',
-      paddingHorizontal: 12,
-      paddingVertical: 8,
-      borderRadius: 20,
+      backgroundColor: colors.surface,
+      borderWidth: 1,
+      borderColor: colors.border,
+      paddingHorizontal: 14,
+      paddingVertical: 9,
+      borderRadius: 24,
+      gap: 5,
     },
-    timerEmoji: { fontSize: 16, marginRight: 4 },
-    timerText: { fontSize: 14, fontWeight: '700', color: Colors.primary },
+    timerEmoji: { fontSize: 14 },
+    timerText: {
+      fontSize: 14,
+      fontWeight: '700',
+      color: colors.text,
+      letterSpacing: -0.2,
+    },
+
     challenge: {
       flexDirection: 'row',
       alignItems: 'center',
-      marginHorizontal: 20,
-      marginBottom: 12,
-      backgroundColor: Colors.primary + '15',
-      borderRadius: 14,
-      padding: 14,
+      marginHorizontal: 16,
+      marginBottom: 16,
+      backgroundColor: colors.isDark ? 'rgba(232,50,90,0.10)' : 'rgba(232,50,90,0.06)',
+      borderRadius: 20,
+      padding: 18,
       borderWidth: 1,
-      borderColor: Colors.primary + '40',
+      borderColor: 'rgba(232,50,90,0.20)',
+      overflow: 'hidden',
+    },
+    challengeGlow: {
+      position: 'absolute',
+      top: -40,
+      right: -30,
+      width: 120,
+      height: 120,
+      borderRadius: 60,
+      backgroundColor: 'rgba(232,50,90,0.12)',
     },
     challengeLeft: { flex: 1 },
-    challengeTag: { fontSize: 12, fontWeight: '700', color: Colors.primary, marginBottom: 4 },
-    challengeTitle: { fontSize: 15, fontWeight: '700', color: colors.text },
-    challengeArrow: { fontSize: 22, color: Colors.primary, fontWeight: '700' },
-    filterRow: { paddingHorizontal: 20, paddingBottom: 12, gap: 8 },
-    filterChip: {
-      paddingHorizontal: 16,
-      paddingVertical: 8,
-      borderRadius: 20,
-      borderWidth: 1.5,
-      borderColor: colors.border,
-      backgroundColor: colors.background,
+    challengeTag: {
+      fontSize: 11,
+      fontWeight: '700',
+      color: Colors.primary,
+      marginBottom: 5,
+      letterSpacing: 0.8,
     },
-    filterChipActive: { backgroundColor: Colors.primary, borderColor: Colors.primary },
-    filterText: { fontSize: 14, fontWeight: '600', color: colors.textSecondary },
+    challengeTitle: {
+      fontSize: 16,
+      fontWeight: '700',
+      color: colors.text,
+      letterSpacing: -0.2,
+    },
+    challengeArrow: {
+      fontSize: 28,
+      color: Colors.primary,
+      fontWeight: '300',
+      marginLeft: 8,
+    },
+
+    filterRow: {
+      paddingHorizontal: 16,
+      paddingBottom: 14,
+      gap: 8,
+    },
+    filterChip: {
+      paddingHorizontal: 18,
+      paddingVertical: 8,
+      borderRadius: 24,
+      borderWidth: 1,
+      borderColor: colors.border,
+      backgroundColor: colors.surface,
+    },
+    filterChipActive: {
+      backgroundColor: Colors.primary,
+      borderColor: Colors.primary,
+    },
+    filterText: {
+      fontSize: 13,
+      fontWeight: '600',
+      color: colors.textSecondary,
+      letterSpacing: 0.1,
+    },
     filterTextActive: { color: '#FFFFFF' },
-    grid: { paddingHorizontal: 12, paddingBottom: 24 },
+
+    grid: { paddingHorizontal: 12, paddingBottom: 32 },
     gridRow: { justifyContent: 'space-between', marginBottom: 12 },
+
     card: {
       flex: 1,
       margin: 6,
-      padding: 16,
+      padding: 18,
       backgroundColor: colors.card,
-      borderRadius: 20,
+      borderRadius: 22,
       borderWidth: 1,
       borderColor: colors.border,
-      shadowColor: '#000',
-      shadowOffset: { width: 0, height: 2 },
-      shadowOpacity: 0.06,
-      shadowRadius: 8,
-      elevation: 3,
+      shadowColor: colors.isDark ? '#000' : 'rgba(0,0,0,0.06)',
+      shadowOffset: { width: 0, height: 4 },
+      shadowOpacity: colors.isDark ? 0.4 : 0.08,
+      shadowRadius: 12,
+      elevation: 4,
     },
-    cardLocked: { opacity: 0.75 },
+    cardLocked: { opacity: 0.6 },
     lockBadge: {
       position: 'absolute',
-      top: 10,
-      right: 10,
-      backgroundColor: colors.lockBg,
+      top: 12,
+      right: 12,
+      backgroundColor: colors.isDark ? 'rgba(240,192,64,0.15)' : 'rgba(240,192,64,0.15)',
+      borderWidth: 1,
+      borderColor: 'rgba(240,192,64,0.30)',
       paddingHorizontal: 8,
       paddingVertical: 2,
       borderRadius: 8,
     },
-    lockText: { fontSize: 10, fontWeight: '800', color: colors.lockText },
-    cardEmoji: { fontSize: 36, marginBottom: 8 },
-    cardTitle: { fontSize: 15, fontWeight: '700', color: colors.text, marginBottom: 8, lineHeight: 20 },
-    levelTag: { alignSelf: 'flex-start', paddingHorizontal: 8, paddingVertical: 3, borderRadius: 8, marginBottom: 6 },
-    levelTagText: { fontSize: 11, fontWeight: '700' },
-    cardTime: { fontSize: 12, color: colors.textSecondary },
+    lockText: {
+      fontSize: 9,
+      fontWeight: '800',
+      color: Colors.gold,
+      letterSpacing: 0.8,
+    },
+    cardEmoji: { fontSize: 34, marginBottom: 10 },
+    cardTitle: {
+      fontSize: 14,
+      fontWeight: '700',
+      color: colors.text,
+      marginBottom: 10,
+      lineHeight: 20,
+      letterSpacing: -0.2,
+    },
+    levelTag: {
+      alignSelf: 'flex-start',
+      paddingHorizontal: 8,
+      paddingVertical: 3,
+      borderRadius: 8,
+      marginBottom: 8,
+    },
+    levelTagText: { fontSize: 10, fontWeight: '700', letterSpacing: 0.3 },
+    cardTime: { fontSize: 11, color: colors.textTertiary, fontWeight: '500' },
   });
 }

@@ -1,4 +1,4 @@
-import { useMemo } from 'react';
+import { useMemo, useState } from 'react';
 import { View, Text, ScrollView, TouchableOpacity, StyleSheet, ActivityIndicator } from 'react-native';
 import { router } from 'expo-router';
 import { SafeAreaView } from 'react-native-safe-area-context';
@@ -7,6 +7,7 @@ import { useSubscription } from '../hooks/useSubscription';
 import { Colors } from '../constants/Colors';
 import { useThemeColors, type ThemeColors } from '../hooks/useThemeColors';
 import { useTranslation } from '../hooks/useTranslation';
+import { Config } from '../constants/Config';
 
 export default function PaywallScreen() {
   const { isLoading } = useSubscriptionStore();
@@ -14,9 +15,10 @@ export default function PaywallScreen() {
   const colors = useThemeColors();
   const t = useTranslation();
   const styles = useMemo(() => createStyles(colors), [colors]);
+  const [selectedPlan, setSelectedPlan] = useState<'monthly' | 'yearly'>('yearly');
 
-  async function handlePro(yearly = false) {
-    const success = await subscribePro(yearly);
+  async function handlePro() {
+    const success = await subscribePro(selectedPlan === 'yearly');
     if (success) router.back();
   }
 
@@ -25,29 +27,73 @@ export default function PaywallScreen() {
     if (success) router.back();
   }
 
+  const features = t.subscription.features;
+
   return (
     <SafeAreaView style={styles.container}>
-      <TouchableOpacity style={styles.closeButton} onPress={() => router.back()}>
+      <TouchableOpacity style={styles.closeButton} onPress={() => router.back()} hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}>
         <Text style={styles.closeText}>✕</Text>
       </TouchableOpacity>
 
       <ScrollView contentContainerStyle={styles.scroll} showsVerticalScrollIndicator={false}>
-        <Text style={styles.crown}>👑</Text>
-        <Text style={styles.title}>{t.subscription.proTitle}</Text>
-        <Text style={styles.subtitle}>{t.subscription.proSubtitle}</Text>
+        {/* Hero */}
+        <View style={styles.heroSection}>
+          <View style={styles.crownWrapper}>
+            <View style={styles.crownGlow} />
+            <Text style={styles.crownEmoji}>👑</Text>
+          </View>
+          <Text style={styles.title}>{t.subscription.proTitle}</Text>
+          <Text style={styles.subtitle}>{t.subscription.proSubtitle}</Text>
+        </View>
 
+        {/* Features */}
         <View style={styles.featuresCard}>
-          {t.subscription.features.map((feature) => (
-            <View key={feature} style={styles.featureRow}>
-              <Text style={styles.featureCheck}>✓</Text>
+          {features.map((feature, idx) => (
+            <View key={feature} style={[styles.featureRow, idx < features.length - 1 && styles.featureRowBorder]}>
+              <View style={styles.featureCheck}>
+                <Text style={styles.featureCheckText}>✓</Text>
+              </View>
               <Text style={styles.featureText}>{feature}</Text>
             </View>
           ))}
         </View>
 
+        {/* Plan Selector */}
+        <View style={styles.planRow}>
+          {/* Monthly */}
+          <TouchableOpacity
+            style={[styles.planCard, selectedPlan === 'monthly' && styles.planCardActive]}
+            onPress={() => setSelectedPlan('monthly')}
+            activeOpacity={0.8}
+          >
+            <Text style={[styles.planLabel, selectedPlan === 'monthly' && styles.planLabelActive]}>Monthly</Text>
+            <Text style={[styles.planPrice, selectedPlan === 'monthly' && styles.planPriceActive]}>
+              {Config.proMonthlyPrice}
+            </Text>
+            <Text style={[styles.planPer, selectedPlan === 'monthly' && styles.planPerActive]}>/month</Text>
+          </TouchableOpacity>
+
+          {/* Yearly */}
+          <TouchableOpacity
+            style={[styles.planCard, styles.planCardYearly, selectedPlan === 'yearly' && styles.planCardActive]}
+            onPress={() => setSelectedPlan('yearly')}
+            activeOpacity={0.8}
+          >
+            <View style={styles.saveBadge}>
+              <Text style={styles.saveText}>{t.subscription.savePercent}</Text>
+            </View>
+            <Text style={[styles.planLabel, selectedPlan === 'yearly' && styles.planLabelActive]}>Yearly</Text>
+            <Text style={[styles.planPrice, selectedPlan === 'yearly' && styles.planPriceActive]}>
+              {Config.proYearlyPrice}
+            </Text>
+            <Text style={[styles.planPer, selectedPlan === 'yearly' && styles.planPerActive]}>/year</Text>
+          </TouchableOpacity>
+        </View>
+
+        {/* CTA Button */}
         <TouchableOpacity
-          style={[styles.proButton, isLoading && styles.buttonDisabled]}
-          onPress={() => handlePro(false)}
+          style={[styles.ctaButton, isLoading && styles.ctaButtonDisabled]}
+          onPress={handlePro}
           activeOpacity={0.85}
           disabled={isLoading}
         >
@@ -55,31 +101,43 @@ export default function PaywallScreen() {
             <ActivityIndicator color="#FFFFFF" />
           ) : (
             <>
-              <Text style={styles.proButtonText}>{t.subscription.cta}</Text>
-              <Text style={styles.proPrice}>{t.subscription.monthly}</Text>
+              <Text style={styles.ctaText}>{t.subscription.cta}</Text>
+              <Text style={styles.ctaSubtext}>
+                {selectedPlan === 'monthly' ? t.subscription.monthly : t.subscription.yearly}
+              </Text>
             </>
           )}
         </TouchableOpacity>
 
-        <View style={styles.yearlyRow}>
-          <Text style={styles.yearlyText}>or </Text>
-          <TouchableOpacity onPress={() => handlePro(true)} disabled={isLoading}>
-            <Text style={styles.yearlyLink}>{t.subscription.yearly}</Text>
-          </TouchableOpacity>
-          <View style={styles.saveBadge}>
-            <Text style={styles.saveText}>{t.subscription.savePercent}</Text>
-          </View>
+        <Text style={styles.legalText}>자동 갱신 · 언제든 취소 가능</Text>
+
+        {/* Divider */}
+        <View style={styles.dividerRow}>
+          <View style={styles.dividerLine} />
+          <Text style={styles.dividerText}>또는</Text>
+          <View style={styles.dividerLine} />
         </View>
 
-        <View style={styles.divider} />
-
+        {/* Ad-Free Card */}
         <View style={styles.adFreeCard}>
-          <Text style={styles.adFreeTitle}>{t.subscription.adFreeTitle}</Text>
-          <Text style={styles.adFreePrice}>{t.subscription.adFreePrice}</Text>
-          {t.subscription.adFreeFeatures.map((f) => (
-            <Text key={f} style={styles.adFreeFeature}>• {f}</Text>
-          ))}
-          <TouchableOpacity style={styles.adFreeButton} onPress={handleAdFree} disabled={isLoading}>
+          <View style={styles.adFreeHeader}>
+            <View>
+              <Text style={styles.adFreeTitle}>{t.subscription.adFreeTitle}</Text>
+              <Text style={styles.adFreeDesc}>일회성 구매 · 영구 적용</Text>
+            </View>
+            <Text style={styles.adFreePrice}>{Config.adFreePrice}</Text>
+          </View>
+          <View style={styles.adFreeFeatures}>
+            {t.subscription.adFreeFeatures.map((f) => (
+              <Text key={f} style={styles.adFreeFeature}>· {f}</Text>
+            ))}
+          </View>
+          <TouchableOpacity
+            style={[styles.adFreeButton, isLoading && styles.ctaButtonDisabled]}
+            onPress={handleAdFree}
+            disabled={isLoading}
+            activeOpacity={0.8}
+          >
             <Text style={styles.adFreeButtonText}>{t.subscription.adFreeCta}</Text>
           </TouchableOpacity>
         </View>
@@ -100,83 +158,166 @@ function createStyles(colors: ThemeColors) {
       top: 56,
       right: 20,
       zIndex: 10,
-      width: 36,
-      height: 36,
-      borderRadius: 18,
+      width: 34,
+      height: 34,
+      borderRadius: 17,
       backgroundColor: colors.surface,
+      borderWidth: 1,
+      borderColor: colors.border,
       justifyContent: 'center',
       alignItems: 'center',
     },
-    closeText: { fontSize: 16, color: colors.textSecondary },
-    scroll: { paddingHorizontal: 24, paddingTop: 60, paddingBottom: 40, alignItems: 'center' },
-    crown: { fontSize: 56, marginBottom: 12 },
-    title: { fontSize: 28, fontWeight: '800', color: colors.text, textAlign: 'center' },
+    closeText: { fontSize: 13, color: colors.textSecondary, fontWeight: '600' },
+
+    scroll: { paddingHorizontal: 22, paddingTop: 60, paddingBottom: 48 },
+
+    heroSection: { alignItems: 'center', marginBottom: 28 },
+    crownWrapper: { position: 'relative', marginBottom: 16 },
+    crownGlow: {
+      position: 'absolute',
+      width: 80,
+      height: 80,
+      borderRadius: 40,
+      backgroundColor: 'rgba(240,192,64,0.15)',
+      top: -8,
+      left: -8,
+    },
+    crownEmoji: { fontSize: 52 },
+    title: {
+      fontSize: 30,
+      fontWeight: '800',
+      color: colors.text,
+      textAlign: 'center',
+      letterSpacing: -0.8,
+      marginBottom: 8,
+    },
     subtitle: {
-      fontSize: 16,
+      fontSize: 15,
       color: colors.textSecondary,
       textAlign: 'center',
-      marginTop: 8,
-      marginBottom: 28,
+      lineHeight: 22,
+      paddingHorizontal: 20,
     },
+
     featuresCard: {
-      width: '100%',
       backgroundColor: colors.surface,
-      borderRadius: 20,
-      padding: 20,
-      marginBottom: 24,
+      borderRadius: 22,
+      marginBottom: 22,
       borderWidth: 1,
       borderColor: colors.border,
+      overflow: 'hidden',
     },
-    featureRow: { flexDirection: 'row', alignItems: 'center', marginBottom: 12 },
-    featureCheck: { fontSize: 16, color: Colors.success, marginRight: 12, fontWeight: '700' },
-    featureText: { fontSize: 15, color: colors.text, flex: 1 },
-    proButton: {
+    featureRow: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      paddingVertical: 14,
+      paddingHorizontal: 18,
+      gap: 14,
+    },
+    featureRowBorder: {
+      borderBottomWidth: 0.5,
+      borderBottomColor: colors.border,
+    },
+    featureCheck: {
+      width: 22,
+      height: 22,
+      borderRadius: 11,
+      backgroundColor: 'rgba(34,197,94,0.15)',
+      justifyContent: 'center',
+      alignItems: 'center',
+    },
+    featureCheckText: { fontSize: 12, color: Colors.success, fontWeight: '800' },
+    featureText: { fontSize: 14, color: colors.text, fontWeight: '500', flex: 1 },
+
+    planRow: { flexDirection: 'row', gap: 12, marginBottom: 20 },
+    planCard: {
+      flex: 1,
+      backgroundColor: colors.surface,
+      borderRadius: 20,
+      padding: 18,
+      alignItems: 'center',
+      borderWidth: 1.5,
+      borderColor: colors.border,
+    },
+    planCardYearly: { position: 'relative', overflow: 'visible' },
+    planCardActive: {
+      borderColor: Colors.primary,
+      backgroundColor: colors.primaryTint,
+    },
+    saveBadge: {
+      position: 'absolute',
+      top: -10,
+      backgroundColor: Colors.primary,
+      paddingHorizontal: 10,
+      paddingVertical: 3,
+      borderRadius: 10,
+    },
+    saveText: { fontSize: 10, fontWeight: '800', color: '#FFFFFF', letterSpacing: 0.3 },
+    planLabel: { fontSize: 12, fontWeight: '700', color: colors.textSecondary, letterSpacing: 0.5, marginBottom: 6 },
+    planLabelActive: { color: Colors.primary },
+    planPrice: { fontSize: 22, fontWeight: '800', color: colors.text, letterSpacing: -0.5 },
+    planPriceActive: { color: Colors.primary },
+    planPer: { fontSize: 11, color: colors.textTertiary, marginTop: 2 },
+    planPerActive: { color: Colors.primary },
+
+    ctaButton: {
       width: '100%',
       backgroundColor: Colors.primary,
-      borderRadius: 18,
-      paddingVertical: 20,
+      borderRadius: 20,
+      paddingVertical: 18,
       alignItems: 'center',
       shadowColor: Colors.primary,
-      shadowOffset: { width: 0, height: 4 },
-      shadowOpacity: 0.3,
-      shadowRadius: 12,
-      elevation: 8,
+      shadowOffset: { width: 0, height: 6 },
+      shadowOpacity: 0.4,
+      shadowRadius: 16,
+      elevation: 10,
+      marginBottom: 10,
     },
-    proButtonText: { color: '#FFFFFF', fontSize: 20, fontWeight: '800' },
-    proPrice: { color: 'rgba(255,255,255,0.8)', fontSize: 14, marginTop: 4 },
-    yearlyRow: { flexDirection: 'row', alignItems: 'center', marginTop: 12, gap: 4 },
-    yearlyText: { fontSize: 14, color: colors.textSecondary },
-    yearlyLink: { fontSize: 14, color: Colors.primary, fontWeight: '700', textDecorationLine: 'underline' },
-    saveBadge: {
-      backgroundColor: Colors.accent,
-      paddingHorizontal: 8,
-      paddingVertical: 2,
-      borderRadius: 8,
-      marginLeft: 6,
-    },
-    saveText: { fontSize: 11, fontWeight: '800', color: '#78350F' },
-    divider: { width: '100%', height: 1, backgroundColor: colors.border, marginVertical: 28 },
+    ctaButtonDisabled: { opacity: 0.5, shadowOpacity: 0 },
+    ctaText: { color: '#FFFFFF', fontSize: 17, fontWeight: '800', letterSpacing: -0.2 },
+    ctaSubtext: { color: 'rgba(255,255,255,0.75)', fontSize: 12, marginTop: 3 },
+
+    legalText: { fontSize: 11, color: colors.textTertiary, textAlign: 'center', marginBottom: 28 },
+
+    dividerRow: { flexDirection: 'row', alignItems: 'center', gap: 12, marginBottom: 22 },
+    dividerLine: { flex: 1, height: 0.5, backgroundColor: colors.border },
+    dividerText: { fontSize: 12, color: colors.textTertiary, fontWeight: '500' },
+
     adFreeCard: {
-      width: '100%',
       backgroundColor: colors.surface,
-      borderRadius: 20,
+      borderRadius: 22,
       padding: 20,
       borderWidth: 1,
       borderColor: colors.border,
+      marginBottom: 24,
     },
-    adFreeTitle: { fontSize: 18, fontWeight: '800', color: colors.text },
-    adFreePrice: { fontSize: 22, fontWeight: '800', color: Colors.secondary, marginTop: 4, marginBottom: 12 },
-    adFreeFeature: { fontSize: 14, color: colors.textSecondary, marginBottom: 6 },
+    adFreeHeader: {
+      flexDirection: 'row',
+      justifyContent: 'space-between',
+      alignItems: 'flex-start',
+      marginBottom: 14,
+    },
+    adFreeTitle: { fontSize: 16, fontWeight: '800', color: colors.text, letterSpacing: -0.3 },
+    adFreeDesc: { fontSize: 11, color: colors.textTertiary, marginTop: 3 },
+    adFreePrice: {
+      fontSize: 22,
+      fontWeight: '800',
+      color: Colors.teal,
+      letterSpacing: -0.5,
+    },
+    adFreeFeatures: { marginBottom: 16, gap: 4 },
+    adFreeFeature: { fontSize: 13, color: colors.textSecondary, lineHeight: 20 },
     adFreeButton: {
-      marginTop: 16,
-      backgroundColor: Colors.secondary,
+      backgroundColor: colors.isDark ? 'rgba(45,212,191,0.12)' : 'rgba(45,212,191,0.10)',
       borderRadius: 14,
-      paddingVertical: 14,
+      paddingVertical: 13,
       alignItems: 'center',
+      borderWidth: 1,
+      borderColor: 'rgba(45,212,191,0.30)',
     },
-    adFreeButtonText: { color: '#FFFFFF', fontSize: 15, fontWeight: '700' },
-    restoreButton: { marginTop: 24 },
-    restoreText: { fontSize: 14, color: colors.textSecondary, textDecorationLine: 'underline' },
-    buttonDisabled: { opacity: 0.6 },
+    adFreeButtonText: { color: Colors.teal, fontSize: 14, fontWeight: '700', letterSpacing: 0.2 },
+
+    restoreButton: { alignItems: 'center' },
+    restoreText: { fontSize: 13, color: colors.textTertiary },
   });
 }

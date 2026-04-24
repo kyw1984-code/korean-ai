@@ -1,30 +1,39 @@
 import { useState, useEffect, useRef, useCallback } from 'react';
-import {
-  RewardedAd,
-  RewardedAdEventType,
-  AdEventType,
-  TestIds,
-} from 'react-native-google-mobile-ads';
-import { getRewardedAdUnitId } from '../services/admobService';
 import { useConversationStore } from '../stores/useConversationStore';
 import { useUserStore } from '../stores/useUserStore';
 import { Config } from '../constants/Config';
+import { getRewardedAdUnitId } from '../services/admobService';
 
-const adUnitId = __DEV__ ? TestIds.REWARDED : getRewardedAdUnitId();
+let RewardedAd: typeof import('react-native-google-mobile-ads')['RewardedAd'] | null = null;
+let RewardedAdEventType: typeof import('react-native-google-mobile-ads')['RewardedAdEventType'] | null = null;
+let AdEventType: typeof import('react-native-google-mobile-ads')['AdEventType'] | null = null;
+let TestIds: typeof import('react-native-google-mobile-ads')['TestIds'] | null = null;
+
+try {
+  const ads = require('react-native-google-mobile-ads');
+  RewardedAd = ads.RewardedAd;
+  RewardedAdEventType = ads.RewardedAdEventType;
+  AdEventType = ads.AdEventType;
+  TestIds = ads.TestIds;
+} catch { /* unavailable in Expo Go */ }
+
+const adUnitId = TestIds && __DEV__ ? TestIds.REWARDED : getRewardedAdUnitId();
 
 export function useRewardedAd() {
   const [isLoaded, setIsLoaded] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
-  const adRef = useRef<RewardedAd | null>(null);
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const adRef = useRef<any>(null);
   const addTime = useConversationStore((s) => s.addTime);
   const addAdWatched = useUserStore((s) => s.addAdWatched);
 
   const loadAd = useCallback(() => {
+    if (!RewardedAd || !RewardedAdEventType || !AdEventType) return;
     if (isLoading || isLoaded) return;
     setIsLoading(true);
 
     const rewarded = RewardedAd.createForAdRequest(adUnitId, {
-      requestNonPersonalizedAdsOnly: true, // GDPR 준수
+      requestNonPersonalizedAdsOnly: true,
     });
     adRef.current = rewarded;
 
@@ -41,7 +50,6 @@ export function useRewardedAd() {
       }
     );
 
-    // 광고 닫힌 후 상태 리셋 — 재귀 호출 대신 상태만 초기화
     const unsubscribeClosed = rewarded.addAdEventListener(AdEventType.CLOSED, () => {
       adRef.current = null;
       setIsLoaded(false);
@@ -64,7 +72,6 @@ export function useRewardedAd() {
     };
   }, [isLoading, isLoaded, addTime, addAdWatched]);
 
-  // 닫힌 후 자동으로 다음 광고 미리 로드
   useEffect(() => {
     if (!isLoaded && !isLoading) {
       loadAd();

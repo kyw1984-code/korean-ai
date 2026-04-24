@@ -4,9 +4,12 @@ import { Colors } from '../constants/Colors';
 export interface ThemeColors {
   background: string;
   surface: string;
+  surfaceElevated: string;
   text: string;
   textSecondary: string;
+  textTertiary: string;
   border: string;
+  borderStrong: string;
   card: string;
   primaryTint: string;
   feedbackBg: string;
@@ -14,9 +17,13 @@ export interface ThemeColors {
   warningBg: string;
   lockBg: string;
   lockText: string;
+  overlay: string;
+  shimmer: string;
+  isDark: boolean;
 }
 
 export function useThemeColors(): ThemeColors {
   const { colorScheme } = useColorScheme();
-  return colorScheme === 'dark' ? Colors.dark : Colors.light;
+  const isDark = colorScheme === 'dark';
+  return { ...(isDark ? Colors.dark : Colors.light), isDark };
 }

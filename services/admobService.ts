@@ -1,7 +1,20 @@
 import { Platform } from 'react-native';
-import { AdsConsent, AdsConsentStatus } from 'react-native-google-mobile-ads';
-import { requestTrackingPermissionsAsync } from 'expo-tracking-transparency';
 import { Config } from '../constants/Config';
+
+let AdsConsent: typeof import('react-native-google-mobile-ads')['AdsConsent'] | null = null;
+let AdsConsentStatus: typeof import('react-native-google-mobile-ads')['AdsConsentStatus'] | null = null;
+let requestTrackingPermissionsAsync: typeof import('expo-tracking-transparency')['requestTrackingPermissionsAsync'] | null = null;
+
+try {
+  const ads = require('react-native-google-mobile-ads');
+  AdsConsent = ads.AdsConsent;
+  AdsConsentStatus = ads.AdsConsentStatus;
+} catch { /* unavailable in Expo Go */ }
+
+try {
+  const tracking = require('expo-tracking-transparency');
+  requestTrackingPermissionsAsync = tracking.requestTrackingPermissionsAsync;
+} catch { /* unavailable in Expo Go */ }
 
 export function getRewardedAdUnitId(): string {
   return Platform.OS === 'ios'
@@ -21,30 +34,21 @@ export function getBannerAdUnitId(): string {
  * Returns true if personalised ads are allowed.
  */
 export async function requestAdConsent(): Promise<boolean> {
+  if (!AdsConsent || !AdsConsentStatus) return false;
   try {
-    // 1. iOS: Apple ATT permission (must come before GDPR form on iOS)
-    if (Platform.OS === 'ios') {
+    if (Platform.OS === 'ios' && requestTrackingPermissionsAsync) {
       await requestTrackingPermissionsAsync();
     }
-
-    // 2. Google UMP — handles GDPR for EEA/UK users automatically.
-    //    Non-EEA users pass through immediately.
     const consentInfo = await AdsConsent.requestInfoUpdate();
-
-    if (
-      consentInfo.isConsentFormAvailable &&
-      consentInfo.status === AdsConsentStatus.REQUIRED
-    ) {
+    if (consentInfo.isConsentFormAvailable && consentInfo.status === AdsConsentStatus.REQUIRED) {
       await AdsConsent.showForm();
     }
-
     const updated = await AdsConsent.requestInfoUpdate();
     return (
       updated.status === AdsConsentStatus.OBTAINED ||
       updated.status === AdsConsentStatus.NOT_REQUIRED
     );
   } catch {
-    // Consent failure should not block app usage — degrade to non-personalised ads
     return false;
   }
 }

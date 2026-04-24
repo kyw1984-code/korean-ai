@@ -9,9 +9,9 @@ import { Config } from '../constants/Config';
 export const ENTITLEMENT_PRO = 'pro';
 export const ENTITLEMENT_AD_FREE = 'ad_free';
 
-export const PACKAGE_PRO_MONTHLY = 'pro_monthly';
-export const PACKAGE_PRO_YEARLY = 'pro_yearly';
-export const PACKAGE_AD_FREE = 'ad_free_lifetime';
+export const PACKAGE_PRO_MONTHLY = '$rc_monthly';
+export const PACKAGE_PRO_YEARLY = '$rc_annual';
+export const PACKAGE_AD_FREE = '$rc_lifetime';
 
 export async function initRevenueCat(): Promise<void> {
   if (__DEV__) {
