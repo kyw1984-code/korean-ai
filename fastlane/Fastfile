@@ -1,0 +1,71 @@
+default_platform(:ios)
+
+# ── Shared preflight ───────────────────────────────────────────────────────────
+def preflight
+  sh("cd .. && npx tsc --noEmit", error_callback: ->(r) { UI.user_error!("TypeScript errors — fix before releasing") })
+  sh("cd .. && npx expo-doctor", error_callback: ->(r) { UI.user_error!("expo-doctor failed — fix before releasing") })
+  UI.success("Preflight passed ✓")
+end
+
+# ── iOS ────────────────────────────────────────────────────────────────────────
+platform :ios do
+
+  desc "Upload metadata + screenshots to App Store Connect (NO submit)"
+  lane :prepare_release do
+    preflight
+    deliver(
+      submit_for_review:          false,   # MANDATORY — never auto-submit
+      automatic_release:          false,
+      force:                      true,
+      skip_binary_upload:         true,
+      skip_screenshots:           false,
+      metadata_path:              "./fastlane/metadata",
+      screenshots_path:           "./fastlane/screenshots",
+      languages:                  ["en-US", "de-DE", "fr-FR", "es-ES", "it-IT"],
+      app_version:                "1.0.0",
+    )
+    UI.success("iOS metadata uploaded. Open App Store Connect to submit for review.")
+  end
+
+  desc "Upload binary to TestFlight (internal testers only)"
+  lane :beta do
+    preflight
+    pilot(
+      app_identifier:             "com.shoktree.koreantalk",
+      ipa:                        ENV["IPA_PATH"],
+      skip_waiting_for_build_processing: true,
+      distribute_external:        false,
+    )
+    UI.success("Uploaded to TestFlight. Share with internal testers before submission.")
+  end
+
+end
+
+# ── Android ────────────────────────────────────────────────────────────────────
+platform :android do
+
+  desc "Upload AAB + metadata to Play Console as Draft (NO submit)"
+  lane :prepare_release do
+    preflight
+    supply(
+      track:                      "internal",
+      release_status:             "draft",   # MANDATORY — never auto-release
+      aab:                        ENV["AAB_PATH"],
+      json_key:                   ENV["GOOGLE_PLAY_JSON_KEY_FILE"],
+      metadata_path:              "./fastlane/metadata/android",
+      languages:                  ["en-US", "de-DE", "fr-FR", "es-ES", "it-IT"],
+      skip_upload_screenshots:    false,
+      skip_upload_images:         false,
+    )
+    UI.success("Android draft uploaded. Open Play Console to promote to production.")
+  end
+
+end
+
+# ── Cross-platform ─────────────────────────────────────────────────────────────
+desc "Prepare release for both iOS and Android"
+lane :prepare_all do
+  Fastlane::LaneManager.cruise_lane("ios", "prepare_release")
+  Fastlane::LaneManager.cruise_lane("android", "prepare_release")
+  UI.success("Both platforms ready. Log in to App Store Connect & Play Console to submit.")
+end
