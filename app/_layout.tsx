@@ -4,6 +4,7 @@ import { StatusBar } from 'expo-status-bar';
 import { useColorScheme } from 'nativewind';
 import '../global.css';
 import { useUserStore } from '../stores/useUserStore';
+import { requestAdConsent } from '../services/admobService';
 
 export default function RootLayout() {
   const { colorScheme } = useColorScheme();
@@ -11,6 +12,8 @@ export default function RootLayout() {
 
   useEffect(() => {
     initProfile();
+    // ATT (iOS) + GDPR (EEA) consent — must run before any ad is loaded
+    requestAdConsent();
   }, [initProfile]);
 
   return (
@@ -24,6 +27,7 @@ export default function RootLayout() {
           name="chat/[scenarioId]"
           options={{ presentation: 'card', animation: 'slide_from_right' }}
         />
+        <Stack.Screen name="paywall" options={{ presentation: 'modal' }} />
       </Stack>
     </>
   );

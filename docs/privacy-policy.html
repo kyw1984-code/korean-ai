@@ -1,0 +1,190 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Privacy Policy – KoreanTalk</title>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+      background: #fff;
+      color: #1a1a2e;
+      line-height: 1.7;
+      font-size: 16px;
+    }
+    .wrap { max-width: 760px; margin: 0 auto; padding: 48px 24px 80px; }
+    header { margin-bottom: 40px; border-bottom: 2px solid #ff6b6b; padding-bottom: 24px; }
+    header h1 { font-size: 2rem; font-weight: 800; color: #ff6b6b; }
+    header p  { color: #6b7280; margin-top: 6px; font-size: 0.9rem; }
+    h2 { font-size: 1.2rem; font-weight: 700; margin: 36px 0 12px; color: #1a1a2e; }
+    p  { margin-bottom: 12px; color: #374151; }
+    ul { margin: 8px 0 12px 20px; color: #374151; }
+    ul li { margin-bottom: 6px; }
+    a  { color: #ff6b6b; text-decoration: none; }
+    a:hover { text-decoration: underline; }
+    .badge {
+      display: inline-block; background: #fff5f5; color: #ff6b6b;
+      border: 1px solid #ff6b6b; border-radius: 6px;
+      padding: 2px 10px; font-size: 0.8rem; font-weight: 700;
+      margin-bottom: 8px;
+    }
+    footer { margin-top: 60px; padding-top: 24px; border-top: 1px solid #e5e7eb;
+             font-size: 0.85rem; color: #9ca3af; }
+    @media (prefers-color-scheme: dark) {
+      body { background: #1a1a2e; color: #f9fafb; }
+      header h2 { color: #f9fafb; }
+      h2 { color: #f9fafb; }
+      p, ul { color: #d1d5db; }
+      .badge { background: #3d1515; }
+    }
+  </style>
+</head>
+<body>
+<div class="wrap">
+
+  <header>
+    <h1>🇰🇷 KoreanTalk</h1>
+    <p>Privacy Policy &nbsp;·&nbsp; Last updated: April 24, 2026</p>
+  </header>
+
+  <p>
+    KoreanTalk ("we", "our", "us") is developed by Shoktree. This Privacy Policy explains
+    what information we collect, why we collect it, and how we use it when you use the
+    KoreanTalk mobile application ("App").
+  </p>
+  <p>
+    By using the App you agree to this policy. If you do not agree, please uninstall the App.
+  </p>
+
+  <!-- 1 -->
+  <h2>1. Information We Collect</h2>
+  <div class="badge">Minimal by design</div>
+  <p>We collect only the minimum data needed to operate the App.</p>
+
+  <p><strong>a) Device Identifier</strong><br>
+  A random identifier is generated locally on your device when you first open the App.
+  It is never linked to your name, email, or any other personal detail.
+  It is used only to enforce daily usage limits and prevent API abuse.</p>
+
+  <p><strong>b) Conversation Content</strong><br>
+  Text messages you send during practice sessions are transmitted to our API server
+  (hosted on Vercel) and forwarded to Anthropic's Claude AI to generate responses.
+  We do not store conversation content on our servers after the response is returned.
+  Anthropic may retain data per their own
+  <a href="https://www.anthropic.com/privacy" target="_blank" rel="noopener">Privacy Policy</a>.</p>
+
+  <p><strong>c) Usage Data (stored locally on device)</strong><br>
+  Session count, minutes practiced, and ads watched are stored only on your device
+  using AsyncStorage. This data never leaves your device unless you explicitly share it.</p>
+
+  <p><strong>d) Purchase Information</strong><br>
+  In-app purchases and subscription status are handled by RevenueCat. We receive
+  anonymous entitlement data (e.g. "user has Pro"). Payment details are never shared with us.
+  See <a href="https://www.revenuecat.com/privacy" target="_blank" rel="noopener">RevenueCat's Privacy Policy</a>.</p>
+
+  <p><strong>e) Advertising Data</strong><br>
+  We use Google AdMob to serve ads to free-tier users. AdMob may collect device
+  identifiers and usage data for ad personalisation, subject to your consent
+  (see Section 4). See
+  <a href="https://policies.google.com/privacy" target="_blank" rel="noopener">Google's Privacy Policy</a>.</p>
+
+  <!-- 2 -->
+  <h2>2. How We Use Your Information</h2>
+  <ul>
+    <li>To deliver AI-powered conversation practice responses</li>
+    <li>To enforce daily free-usage limits (rate limiting)</li>
+    <li>To process and verify in-app purchases</li>
+    <li>To display relevant advertisements to free-tier users</li>
+    <li>To improve App performance and fix bugs (via aggregated, anonymous crash reports)</li>
+  </ul>
+  <p>We do <strong>not</strong> sell your data. We do not use your data for marketing purposes.</p>
+
+  <!-- 3 -->
+  <h2>3. Data Sharing</h2>
+  <p>We share data only with the following third-party service providers, solely to operate the App:</p>
+  <ul>
+    <li><strong>Anthropic</strong> — AI response generation (<a href="https://www.anthropic.com/privacy" target="_blank" rel="noopener">Privacy Policy</a>)</li>
+    <li><strong>Vercel</strong> — API hosting (<a href="https://vercel.com/legal/privacy-policy" target="_blank" rel="noopener">Privacy Policy</a>)</li>
+    <li><strong>RevenueCat</strong> — Subscription management (<a href="https://www.revenuecat.com/privacy" target="_blank" rel="noopener">Privacy Policy</a>)</li>
+    <li><strong>Google AdMob</strong> — Advertising (free tier only) (<a href="https://policies.google.com/privacy" target="_blank" rel="noopener">Privacy Policy</a>)</li>
+  </ul>
+  <p>We do not share data with any other third parties.</p>
+
+  <!-- 4 -->
+  <h2>4. Advertising &amp; Consent (GDPR / ATT)</h2>
+  <p>
+    If you are located in the European Economic Area (EEA), United Kingdom, or Switzerland,
+    we will ask for your consent before serving personalised ads, in compliance with the
+    General Data Protection Regulation (GDPR) and Google's EU User Consent Policy.
+  </p>
+  <p>
+    On iOS, the App requests permission to track you across apps and websites using
+    Apple's App Tracking Transparency (ATT) framework. You may deny this permission;
+    the App will continue to function, but ads may be less relevant.
+  </p>
+  <p>You can withdraw consent at any time in your device Settings.</p>
+
+  <!-- 5 -->
+  <h2>5. Data Retention</h2>
+  <ul>
+    <li><strong>Conversation messages</strong> — Not retained on our servers after response delivery.</li>
+    <li><strong>Device identifier &amp; rate-limit counters</strong> — Retained for up to 90 days, then automatically deleted.</li>
+    <li><strong>Local app data</strong> — Retained on your device until you uninstall the App or clear app data.</li>
+  </ul>
+
+  <!-- 6 -->
+  <h2>6. Your Rights (GDPR)</h2>
+  <p>If you are in the EEA or UK, you have the right to:</p>
+  <ul>
+    <li><strong>Access</strong> — Request a copy of the personal data we hold about you.</li>
+    <li><strong>Deletion</strong> — Request erasure of your data ("right to be forgotten").</li>
+    <li><strong>Portability</strong> — Receive your data in a structured, machine-readable format.</li>
+    <li><strong>Objection</strong> — Object to processing based on legitimate interests.</li>
+    <li><strong>Withdraw consent</strong> — Withdraw any consent you have given at any time.</li>
+  </ul>
+  <p>To exercise any of these rights, contact us at <a href="mailto:kyw1984@gmail.com">kyw1984@gmail.com</a>.</p>
+
+  <!-- 7 -->
+  <h2>7. Children's Privacy</h2>
+  <p>
+    The App is not directed to children under 13 (or under 16 in the EEA).
+    We do not knowingly collect personal information from children.
+    If you believe a child has provided us with personal information, please contact us
+    and we will delete it promptly.
+  </p>
+
+  <!-- 8 -->
+  <h2>8. Security</h2>
+  <p>
+    All data transmitted between the App and our servers is encrypted using HTTPS/TLS.
+    We follow industry-standard security practices to protect your information.
+    No method of transmission over the Internet is 100% secure; we cannot guarantee
+    absolute security.
+  </p>
+
+  <!-- 9 -->
+  <h2>9. Changes to This Policy</h2>
+  <p>
+    We may update this Privacy Policy from time to time. We will notify you by updating
+    the "Last updated" date at the top of this page. Continued use of the App after
+    changes constitutes acceptance of the updated policy.
+  </p>
+
+  <!-- 10 -->
+  <h2>10. Contact Us</h2>
+  <p>If you have any questions about this Privacy Policy, please contact:</p>
+  <ul>
+    <li><strong>Developer:</strong> Shoktree</li>
+    <li><strong>Email:</strong> <a href="mailto:kyw1984@gmail.com">kyw1984@gmail.com</a></li>
+    <li><strong>App:</strong> KoreanTalk — AI Conversation Practice</li>
+  </ul>
+
+  <footer>
+    © 2026 Shoktree · KoreanTalk ·
+    <a href="mailto:kyw1984@gmail.com">kyw1984@gmail.com</a>
+  </footer>
+
+</div>
+</body>
+</html>

@@ -1,5 +1,5 @@
-import { useMemo } from 'react';
-import { View, Text, TouchableOpacity, ScrollView, StyleSheet } from 'react-native';
+import { useMemo, useEffect, useState } from 'react';
+import { View, Text, TouchableOpacity, ScrollView, Switch, StyleSheet, Platform } from 'react-native';
 import { router } from 'expo-router';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useUserStore } from '../../stores/useUserStore';
@@ -8,6 +8,11 @@ import { useSubscription } from '../../hooks/useSubscription';
 import { Colors } from '../../constants/Colors';
 import { useThemeColors, type ThemeColors } from '../../hooks/useThemeColors';
 import { useTranslation } from '../../hooks/useTranslation';
+import {
+  scheduleDailyReminder,
+  cancelDailyReminder,
+  isDailyReminderScheduled,
+} from '../../services/notificationService';
 
 type Level = 'beginner' | 'intermediate' | 'advanced';
 
@@ -19,6 +24,28 @@ export default function SettingsScreen() {
   const colors = useThemeColors();
   const t = useTranslation();
   const styles = useMemo(() => createStyles(colors), [colors]);
+
+  const [reminderEnabled, setReminderEnabled] = useState(false);
+
+  useEffect(() => {
+    if (Platform.OS !== 'web') {
+      isDailyReminderScheduled().then(setReminderEnabled);
+    }
+  }, []);
+
+  const toggleReminder = async (value: boolean) => {
+    if (value) {
+      const ok = await scheduleDailyReminder(
+        20, 0,
+        t.notifications.reminderTitle,
+        t.notifications.reminderBody,
+      );
+      setReminderEnabled(ok);
+    } else {
+      await cancelDailyReminder();
+      setReminderEnabled(false);
+    }
+  };
 
   const levels: Array<{ id: Level; label: string }> = [
     { id: 'beginner', label: t.onboarding.levels.beginner.label + ' ' + t.onboarding.levels.beginner.emoji },
@@ -66,6 +93,26 @@ export default function SettingsScreen() {
             </TouchableOpacity>
           ))}
         </View>
+
+        {Platform.OS !== 'web' && (
+          <View style={styles.section}>
+            <Text style={styles.sectionTitle}>{t.notifications.reminderSection}</Text>
+            <View style={styles.card}>
+              <View style={styles.reminderRow}>
+                <Text style={styles.reminderLabel}>
+                  {reminderEnabled ? t.notifications.disableReminder : t.notifications.enableReminder}
+                </Text>
+                <Switch
+                  value={reminderEnabled}
+                  onValueChange={toggleReminder}
+                  trackColor={{ false: colors.border, true: Colors.primary }}
+                  thumbColor="#FFFFFF"
+                />
+              </View>
+              <Text style={styles.reminderHint}>8:00 PM</Text>
+            </View>
+          </View>
+        )}
 
         <View style={styles.section}>
           <Text style={styles.sectionTitle}>{t.settings.accountSection}</Text>
@@ -121,6 +168,13 @@ function createStyles(colors: ThemeColors) {
     levelText: { fontSize: 16, fontWeight: '600', color: colors.text },
     levelTextActive: { color: Colors.primary },
     check: { fontSize: 18, color: Colors.primary, fontWeight: '700' },
+    reminderRow: {
+      flexDirection: 'row',
+      justifyContent: 'space-between',
+      alignItems: 'center',
+    },
+    reminderLabel: { fontSize: 15, fontWeight: '600', color: colors.text, flex: 1 },
+    reminderHint: { fontSize: 12, color: colors.textSecondary, marginTop: 6 },
     menuRow: {
       flexDirection: 'row',
       justifyContent: 'space-between',

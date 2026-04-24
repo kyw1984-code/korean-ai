@@ -28,6 +28,8 @@ export interface UserProfile {
   deviceId: string;
   level: 'beginner' | 'intermediate' | 'advanced';
   createdAt: number;
+  streakDays: number;
+  lastPracticeDate: string | null;
 }
 
 export interface UsageRecord {

@@ -79,6 +79,25 @@ export interface Translations {
     inProgress: string;
     turns: (n: number) => string;
     emptyText: string;
+    streak: string;
+    streakDays: (n: number) => string;
+    streakEmpty: string;
+    weeklyReport: string;
+    weeklyProLocked: string;
+    weeklyMinutes: string;
+    weeklySessions: string;
+    weeklyScenarios: string;
+    weeklyAvgScore: string;
+    weeklyUnlockCta: string;
+  };
+  notifications: {
+    permissionTitle: string;
+    permissionBody: string;
+    reminderTitle: string;
+    reminderBody: string;
+    enableReminder: string;
+    disableReminder: string;
+    reminderSection: string;
   };
   errors: {
     networkError: string;

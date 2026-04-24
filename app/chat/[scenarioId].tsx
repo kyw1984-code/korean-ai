@@ -48,6 +48,7 @@ export default function ChatScreen() {
   const profile = useUserStore((s) => s.profile);
   const addMinutesUsed = useUserStore((s) => s.addMinutesUsed);
   const incrementSessions = useUserStore((s) => s.incrementSessions);
+  const recordPracticeDay = useUserStore((s) => s.recordPracticeDay);
   const { isPro } = useSubscriptionStore();
   const { isLoaded: adLoaded, isLoading: adLoading, showAd } = useRewardedAd();
 
@@ -157,6 +158,7 @@ export default function ChatScreen() {
     const minutesUsed = Math.ceil((Date.now() - (currentSession?.startedAt ?? Date.now())) / 60000);
     addMinutesUsed(minutesUsed);
     incrementSessions();
+    recordPracticeDay();
     endSession();
     router.back();
   }

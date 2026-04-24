@@ -21,6 +21,7 @@ interface UserState {
   addMinutesUsed: (minutes: number) => void;
   addAdWatched: () => void;
   incrementSessions: () => void;
+  recordPracticeDay: () => void;
   getRemainingFreeMinutes: (maxMinutes: number) => number;
   completeOnboarding: () => void;
 }
@@ -48,8 +49,13 @@ export const useUserStore = create<UserState>()(
               deviceId: generateDeviceId(),
               level: 'beginner',
               createdAt: Date.now(),
+              streakDays: 0,
+              lastPracticeDate: null,
             },
           });
+        } else if (profile != null && !('streakDays' in (profile as UserProfile))) {
+          const p = profile as UserProfile;
+          set({ profile: { ...p, streakDays: 0, lastPracticeDate: null } });
         }
         // Reset daily usage if it's a new day
         const usage = get().usageToday;
@@ -83,6 +89,26 @@ export const useUserStore = create<UserState>()(
           sessionsCompleted: s.usageToday.sessionsCompleted + 1,
         },
       })),
+
+      recordPracticeDay: () => {
+        const { profile } = get();
+        if (!profile) return;
+        const today = getTodayKey();
+        if (profile.lastPracticeDate === today) return;
+
+        const yesterday = new Date();
+        yesterday.setDate(yesterday.getDate() - 1);
+        const yesterdayKey = yesterday.toISOString().split('T')[0];
+        const isConsecutive = profile.lastPracticeDate === yesterdayKey;
+
+        set({
+          profile: {
+            ...profile,
+            streakDays: isConsecutive ? profile.streakDays + 1 : 1,
+            lastPracticeDate: today,
+          },
+        });
+      },
 
       getRemainingFreeMinutes: (maxMinutes) => {
         const { usageToday } = get();
