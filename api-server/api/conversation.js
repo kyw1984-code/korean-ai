@@ -43,8 +43,8 @@ module.exports = async function handler(req, res) {
 
     // Route to cheaper model for basic conversation, premium for advanced correction
     const model = isPremium
-      ? 'claude-haiku-4-5'
-      : 'claude-haiku-4-5';
+      ? 'claude-sonnet-4-6'
+      : 'claude-haiku-4-5-20251001';
 
     const response = await client.messages.create({
       model,
@@ -56,10 +56,9 @@ module.exports = async function handler(req, res) {
           cache_control: { type: 'ephemeral' }, // Cache system prompt
         },
       ],
-      messages: messages.slice(-10).map((m) => ({
-        role: m.role,
-        content: m.content,
-      })),
+      messages: messages.length === 0
+        ? [{ role: 'user', content: '안녕하세요! Please start our conversation based on the scenario.' }]
+        : messages.slice(-10).map((m) => ({ role: m.role, content: m.content })),
     });
 
     const content = response.content[0]?.type === 'text'
@@ -72,8 +71,8 @@ module.exports = async function handler(req, res) {
       outputTokens: response.usage.output_tokens,
     });
   } catch (error) {
-    console.error('Claude API error:', error);
-    return res.status(500).json({ message: 'AI service error. Please try again.' });
+    console.error('Claude API error:', error?.message, error?.status, JSON.stringify(error?.error ?? {}));
+    return res.status(500).json({ message: 'AI service error. Please try again.', debug: error?.message });
   }
 };
 
