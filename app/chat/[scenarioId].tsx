@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef, useCallback } from 'react';
+import { useState, useEffect, useRef, useMemo } from 'react';
 import {
   View,
   Text,
@@ -19,8 +19,9 @@ import { useSubscriptionStore } from '../../stores/useSubscriptionStore';
 import { useRewardedAd } from '../../hooks/useRewardedAd';
 import { sendMessage } from '../../services/conversationService';
 import { Colors } from '../../constants/Colors';
-import { Strings } from '../../constants/Strings';
 import { Config } from '../../constants/Config';
+import { useThemeColors, type ThemeColors } from '../../hooks/useThemeColors';
+import { useTranslation } from '../../hooks/useTranslation';
 import { Message } from '../../types';
 
 export default function ChatScreen() {
@@ -29,6 +30,9 @@ export default function ChatScreen() {
   const flatListRef = useRef<FlatList>(null);
 
   const scenario = SCENARIOS.find((s) => s.id === scenarioId);
+  const colors = useThemeColors();
+  const t = useTranslation();
+  const styles = useMemo(() => createStyles(colors), [colors]);
 
   const {
     currentSession,
@@ -39,7 +43,6 @@ export default function ChatScreen() {
     endSession,
     setLoading,
     tickTimer,
-    clearSession,
   } = useConversationStore();
 
   const profile = useUserStore((s) => s.profile);
@@ -48,7 +51,6 @@ export default function ChatScreen() {
   const { isPro } = useSubscriptionStore();
   const { isLoaded: adLoaded, isLoading: adLoading, showAd } = useRewardedAd();
 
-  // Start session on mount
   useEffect(() => {
     if (!scenario) {
       router.back();
@@ -58,16 +60,12 @@ export default function ChatScreen() {
     sendInitialMessage(scenario.id, profile?.level ?? 'beginner');
   }, []);
 
-  // Timer tick
   useEffect(() => {
     if (!currentSession) return;
-    const interval = setInterval(() => {
-      tickTimer();
-    }, 1000);
+    const interval = setInterval(() => tickTimer(), 1000);
     return () => clearInterval(interval);
   }, [currentSession, tickTimer]);
 
-  // Handle time up
   useEffect(() => {
     if (timeRemainingSeconds === 0 && currentSession) {
       handleTimeUp();
@@ -87,7 +85,7 @@ export default function ChatScreen() {
       });
       addMessage('assistant', res.content);
     } catch {
-      addMessage('assistant', '안녕하세요! 준비됐나요? Let\'s practice Korean! 😊\n\n💡 피드백:\n- 문법: N/A\n- 자연스러움: N/A');
+      addMessage('assistant', "안녕하세요! 준비됐나요? Let's practice Korean! 😊\n\n💡 피드백:\n- 문법: N/A\n- 자연스러움: N/A");
     } finally {
       setLoading(false);
     }
@@ -98,8 +96,8 @@ export default function ChatScreen() {
     if (!text || isLoading || !profile || !currentSession) return;
 
     if (currentSession.turnsUsed >= Config.maxSessionTurns) {
-      Alert.alert('Session Complete', 'Great practice! Starting a new session will reset the conversation.', [
-        { text: 'End Session', onPress: handleEndSession },
+      Alert.alert(t.chat.sessionComplete, t.chat.sessionCompleteMsg, [
+        { text: t.chat.sessionCompleteBtn, onPress: handleEndSession },
       ]);
       return;
     }
@@ -123,8 +121,8 @@ export default function ChatScreen() {
         deviceId: profile.deviceId,
       });
       addMessage('assistant', res.content);
-    } catch (error) {
-      addMessage('assistant', Strings.errors.apiError);
+    } catch {
+      addMessage('assistant', t.errors.apiError);
     } finally {
       setLoading(false);
       setTimeout(() => flatListRef.current?.scrollToEnd({ animated: true }), 100);
@@ -134,28 +132,25 @@ export default function ChatScreen() {
   function handleTimeUp() {
     type AlertButton = { text: string; style?: 'destructive' | 'cancel' | 'default'; onPress?: () => void };
     const buttons: AlertButton[] = [
-      { text: 'End Session', style: 'destructive', onPress: handleEndSession },
-      { text: adLoaded ? '+ 5 min (Watch Ad)' : 'Loading ad...', onPress: handleWatchAd },
+      { text: t.chat.endSession, style: 'destructive', onPress: handleEndSession },
+      { text: t.chat.watchAdBtn(adLoaded), onPress: handleWatchAd },
     ];
     if (!isPro()) {
-      buttons.push({ text: 'Go Pro', onPress: () => router.push('/paywall') });
+      buttons.push({ text: t.chat.goPro, onPress: () => router.push('/paywall') });
     }
-    Alert.alert(Strings.chat.timeUp, 'Watch an ad for 5 more minutes or upgrade to Pro.', buttons);
+    Alert.alert(t.chat.timeUp, t.chat.timeUpMsg, buttons);
   }
 
   async function handleWatchAd() {
     if (!adLoaded) {
       Alert.alert(
-        adLoading ? 'Loading Ad...' : Strings.rewarded.noAd,
-        adLoading ? 'Please wait a moment.' : ''
+        adLoading ? t.chat.adLoadingTitle : t.rewarded.noAd,
+        adLoading ? t.chat.adLoadingMsg : ''
       );
       return;
     }
-    // showAd()가 완료되면 useRewardedAd 내부에서 addTime + addAdWatched 자동 호출
     const shown = await showAd();
-    if (!shown) {
-      Alert.alert(Strings.errors.adNotReady);
-    }
+    if (!shown) Alert.alert(t.errors.adNotReady);
   }
 
   function handleEndSession() {
@@ -175,10 +170,9 @@ export default function ChatScreen() {
 
   return (
     <SafeAreaView style={styles.container} edges={['top']}>
-      {/* Header */}
       <View style={styles.header}>
         <TouchableOpacity onPress={handleEndSession} style={styles.backButton}>
-          <Text style={styles.backText}>← End</Text>
+          <Text style={styles.backText}>← {t.chat.endSession}</Text>
         </TouchableOpacity>
         <View style={styles.headerCenter}>
           <Text style={styles.headerEmoji}>{scenario.emoji}</Text>
@@ -191,18 +185,18 @@ export default function ChatScreen() {
         </View>
       </View>
 
-      {/* Messages */}
       <FlatList
         ref={flatListRef}
         data={currentSession?.messages ?? []}
         keyExtractor={(item) => item.id}
         contentContainerStyle={styles.messageList}
         onContentSizeChange={() => flatListRef.current?.scrollToEnd({ animated: true })}
-        renderItem={({ item }) => <MessageBubble message={item} />}
-        ListFooterComponent={isLoading ? <TypingIndicator /> : null}
+        renderItem={({ item }) => (
+          <MessageBubble message={item} colors={colors} feedbackLabel={t.chat.feedbackLabel} />
+        )}
+        ListFooterComponent={isLoading ? <TypingIndicator colors={colors} /> : null}
       />
 
-      {/* Input */}
       <KeyboardAvoidingView
         behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
         keyboardVerticalOffset={0}
@@ -212,7 +206,8 @@ export default function ChatScreen() {
             style={styles.input}
             value={inputText}
             onChangeText={setInputText}
-            placeholder={Strings.chat.placeholder}
+            placeholder={t.chat.placeholder}
+            placeholderTextColor={colors.textSecondary}
             multiline
             maxLength={300}
             returnKeyType="send"
@@ -231,10 +226,17 @@ export default function ChatScreen() {
   );
 }
 
-function MessageBubble({ message }: { message: Message }) {
+function MessageBubble({
+  message,
+  colors,
+  feedbackLabel,
+}: {
+  message: Message;
+  colors: ThemeColors;
+  feedbackLabel: string;
+}) {
+  const styles = useMemo(() => createStyles(colors), [colors]);
   const isUser = message.role === 'user';
-
-  // Split assistant message into response + feedback
   const parts = message.content.split('💡 피드백:');
   const mainText = parts[0].trim();
   const feedbackText = parts[1]?.trim();
@@ -250,7 +252,7 @@ function MessageBubble({ message }: { message: Message }) {
         </View>
         {feedbackText && (
           <View style={styles.feedbackCard}>
-            <Text style={styles.feedbackTitle}>💡 피드백</Text>
+            <Text style={styles.feedbackTitle}>{feedbackLabel}</Text>
             <Text style={styles.feedbackText}>{feedbackText}</Text>
           </View>
         )}
@@ -259,7 +261,8 @@ function MessageBubble({ message }: { message: Message }) {
   );
 }
 
-function TypingIndicator() {
+function TypingIndicator({ colors }: { colors: ThemeColors }) {
+  const styles = useMemo(() => createStyles(colors), [colors]);
   return (
     <View style={styles.typingWrapper}>
       <Text style={styles.avatar}>👩‍🏫</Text>
@@ -270,134 +273,94 @@ function TypingIndicator() {
   );
 }
 
-const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    backgroundColor: Colors.light.background,
-  },
-  header: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    paddingHorizontal: 16,
-    paddingVertical: 12,
-    borderBottomWidth: 1,
-    borderBottomColor: Colors.light.border,
-    backgroundColor: Colors.light.background,
-  },
-  backButton: { paddingRight: 12 },
-  backText: { fontSize: 15, color: Colors.primary, fontWeight: '600' },
-  headerCenter: {
-    flex: 1,
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 6,
-  },
-  headerEmoji: { fontSize: 20 },
-  headerTitle: {
-    fontSize: 16,
-    fontWeight: '700',
-    color: Colors.light.text,
-    flex: 1,
-  },
-  timerChip: {
-    backgroundColor: Colors.light.surface,
-    paddingHorizontal: 12,
-    paddingVertical: 6,
-    borderRadius: 12,
-  },
-  timerChipWarning: { backgroundColor: '#FEF2F2' },
-  timerText: { fontSize: 15, fontWeight: '700', color: Colors.light.text },
-  timerTextWarning: { color: Colors.error },
-  messageList: {
-    paddingHorizontal: 16,
-    paddingVertical: 16,
-    gap: 16,
-  },
-  bubbleWrapper: {
-    flexDirection: 'row',
-    alignItems: 'flex-end',
-    gap: 8,
-  },
-  bubbleRight: { justifyContent: 'flex-end' },
-  bubbleLeft: { justifyContent: 'flex-start' },
-  avatar: { fontSize: 28 },
-  bubbleColumn: { flex: 1, maxWidth: '85%' },
-  bubble: {
-    borderRadius: 20,
-    paddingHorizontal: 16,
-    paddingVertical: 12,
-  },
-  bubbleUser: {
-    backgroundColor: Colors.primary,
-    borderBottomRightRadius: 4,
-    alignSelf: 'flex-end',
-  },
-  bubbleAssistant: {
-    backgroundColor: Colors.light.surface,
-    borderBottomLeftRadius: 4,
-  },
-  bubbleText: { fontSize: 15, lineHeight: 22 },
-  bubbleTextUser: { color: '#FFFFFF' },
-  bubbleTextAssistant: { color: Colors.light.text },
-  feedbackCard: {
-    marginTop: 6,
-    backgroundColor: '#FFFBEB',
-    borderRadius: 12,
-    padding: 12,
-    borderLeftWidth: 3,
-    borderLeftColor: Colors.accent,
-  },
-  feedbackTitle: {
-    fontSize: 12,
-    fontWeight: '700',
-    color: '#92400E',
-    marginBottom: 4,
-  },
-  feedbackText: { fontSize: 13, color: '#78350F', lineHeight: 18 },
-  typingWrapper: {
-    flexDirection: 'row',
-    alignItems: 'flex-end',
-    gap: 8,
-    paddingTop: 8,
-  },
-  typingBubble: {
-    backgroundColor: Colors.light.surface,
-    borderRadius: 20,
-    paddingHorizontal: 16,
-    paddingVertical: 12,
-  },
-  typingText: { fontSize: 20, color: Colors.light.textSecondary, letterSpacing: 2 },
-  inputRow: {
-    flexDirection: 'row',
-    alignItems: 'flex-end',
-    paddingHorizontal: 16,
-    paddingVertical: 12,
-    borderTopWidth: 1,
-    borderTopColor: Colors.light.border,
-    backgroundColor: Colors.light.background,
-    gap: 8,
-  },
-  input: {
-    flex: 1,
-    minHeight: 44,
-    maxHeight: 120,
-    backgroundColor: Colors.light.surface,
-    borderRadius: 22,
-    paddingHorizontal: 16,
-    paddingVertical: 10,
-    fontSize: 15,
-    color: Colors.light.text,
-    borderWidth: 1,
-    borderColor: Colors.light.border,
-  },
-  sendButton: {
-    width: 44,
-    height: 44,
-    borderRadius: 22,
-    backgroundColor: Colors.primary,
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
-  sendButtonDisabled: { opacity: 0.4 },
-  sendText: { fontSize: 20, color: '#FFFFFF', fontWeight: '700' },
-});
+function createStyles(colors: ThemeColors) {
+  return StyleSheet.create({
+    container: { flex: 1, backgroundColor: colors.background },
+    header: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      paddingHorizontal: 16,
+      paddingVertical: 12,
+      borderBottomWidth: 1,
+      borderBottomColor: colors.border,
+      backgroundColor: colors.background,
+    },
+    backButton: { paddingRight: 12 },
+    backText: { fontSize: 15, color: Colors.primary, fontWeight: '600' },
+    headerCenter: { flex: 1, flexDirection: 'row', alignItems: 'center', gap: 6 },
+    headerEmoji: { fontSize: 20 },
+    headerTitle: { fontSize: 16, fontWeight: '700', color: colors.text, flex: 1 },
+    timerChip: {
+      backgroundColor: colors.surface,
+      paddingHorizontal: 12,
+      paddingVertical: 6,
+      borderRadius: 12,
+    },
+    timerChipWarning: { backgroundColor: colors.warningBg },
+    timerText: { fontSize: 15, fontWeight: '700', color: colors.text },
+    timerTextWarning: { color: Colors.error },
+    messageList: { paddingHorizontal: 16, paddingVertical: 16, gap: 16 },
+    bubbleWrapper: { flexDirection: 'row', alignItems: 'flex-end', gap: 8 },
+    bubbleRight: { justifyContent: 'flex-end' },
+    bubbleLeft: { justifyContent: 'flex-start' },
+    avatar: { fontSize: 28 },
+    bubbleColumn: { flex: 1, maxWidth: '85%' },
+    bubble: { borderRadius: 20, paddingHorizontal: 16, paddingVertical: 12 },
+    bubbleUser: { backgroundColor: Colors.primary, borderBottomRightRadius: 4, alignSelf: 'flex-end' },
+    bubbleAssistant: { backgroundColor: colors.surface, borderBottomLeftRadius: 4 },
+    bubbleText: { fontSize: 15, lineHeight: 22 },
+    bubbleTextUser: { color: '#FFFFFF' },
+    bubbleTextAssistant: { color: colors.text },
+    feedbackCard: {
+      marginTop: 6,
+      backgroundColor: colors.feedbackBg,
+      borderRadius: 12,
+      padding: 12,
+      borderLeftWidth: 3,
+      borderLeftColor: Colors.accent,
+    },
+    feedbackTitle: { fontSize: 12, fontWeight: '700', color: colors.feedbackText, marginBottom: 4 },
+    feedbackText: { fontSize: 13, color: colors.feedbackText, lineHeight: 18 },
+    typingWrapper: { flexDirection: 'row', alignItems: 'flex-end', gap: 8, paddingTop: 8 },
+    typingBubble: {
+      backgroundColor: colors.surface,
+      borderRadius: 20,
+      paddingHorizontal: 16,
+      paddingVertical: 12,
+    },
+    typingText: { fontSize: 20, color: colors.textSecondary, letterSpacing: 2 },
+    inputRow: {
+      flexDirection: 'row',
+      alignItems: 'flex-end',
+      paddingHorizontal: 16,
+      paddingVertical: 12,
+      borderTopWidth: 1,
+      borderTopColor: colors.border,
+      backgroundColor: colors.background,
+      gap: 8,
+    },
+    input: {
+      flex: 1,
+      minHeight: 44,
+      maxHeight: 120,
+      backgroundColor: colors.surface,
+      borderRadius: 22,
+      paddingHorizontal: 16,
+      paddingVertical: 10,
+      fontSize: 15,
+      color: colors.text,
+      borderWidth: 1,
+      borderColor: colors.border,
+    },
+    sendButton: {
+      width: 44,
+      height: 44,
+      borderRadius: 22,
+      backgroundColor: Colors.primary,
+      justifyContent: 'center',
+      alignItems: 'center',
+    },
+    sendButtonDisabled: { opacity: 0.4 },
+    sendText: { fontSize: 20, color: '#FFFFFF', fontWeight: '700' },
+  });
+}

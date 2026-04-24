@@ -1,3 +1,4 @@
+import { useMemo } from 'react';
 import { View, Text, TouchableOpacity, ScrollView, StyleSheet } from 'react-native';
 import { router } from 'expo-router';
 import { SafeAreaView } from 'react-native-safe-area-context';
@@ -5,53 +6,54 @@ import { useUserStore } from '../../stores/useUserStore';
 import { useSubscriptionStore } from '../../stores/useSubscriptionStore';
 import { useSubscription } from '../../hooks/useSubscription';
 import { Colors } from '../../constants/Colors';
+import { useThemeColors, type ThemeColors } from '../../hooks/useThemeColors';
+import { useTranslation } from '../../hooks/useTranslation';
 
-const LEVELS = [
-  { id: 'beginner' as const, label: 'Beginner 🌱' },
-  { id: 'intermediate' as const, label: 'Intermediate 🌿' },
-  { id: 'advanced' as const, label: 'Advanced 🌳' },
-];
+type Level = 'beginner' | 'intermediate' | 'advanced';
 
 export default function SettingsScreen() {
   const profile = useUserStore((s) => s.profile);
   const setLevel = useUserStore((s) => s.setLevel);
-  const { tier, isPro } = useSubscriptionStore();
+  const { isPro } = useSubscriptionStore();
   const { restore } = useSubscription();
+  const colors = useThemeColors();
+  const t = useTranslation();
+  const styles = useMemo(() => createStyles(colors), [colors]);
 
-  function handleUpgrade() {
-    router.push('/paywall');
-  }
+  const levels: Array<{ id: Level; label: string }> = [
+    { id: 'beginner', label: t.onboarding.levels.beginner.label + ' ' + t.onboarding.levels.beginner.emoji },
+    { id: 'intermediate', label: t.onboarding.levels.intermediate.label + ' ' + t.onboarding.levels.intermediate.emoji },
+    { id: 'advanced', label: t.onboarding.levels.advanced.label + ' ' + t.onboarding.levels.advanced.emoji },
+  ];
 
   return (
     <SafeAreaView style={styles.container}>
       <ScrollView contentContainerStyle={styles.scroll}>
-        <Text style={styles.title}>Settings</Text>
+        <Text style={styles.title}>{t.settings.title}</Text>
 
-        {/* Subscription status */}
         <View style={styles.section}>
-          <Text style={styles.sectionTitle}>Subscription</Text>
+          <Text style={styles.sectionTitle}>{t.settings.subscriptionSection}</Text>
           <View style={styles.card}>
             <View style={styles.tierRow}>
               <Text style={styles.tierEmoji}>{isPro() ? '⭐' : '🆓'}</Text>
               <View>
-                <Text style={styles.tierLabel}>{isPro() ? 'Pro' : 'Free'}</Text>
+                <Text style={styles.tierLabel}>{isPro() ? t.subscription.proTier : t.subscription.freeTier}</Text>
                 <Text style={styles.tierDesc}>
-                  {isPro() ? 'Unlimited practice' : 'Watch ads for free time'}
+                  {isPro() ? t.subscription.proTierDesc : t.subscription.freeTierDesc}
                 </Text>
               </View>
             </View>
             {!isPro() && (
-              <TouchableOpacity style={styles.upgradeButton} onPress={handleUpgrade}>
-                <Text style={styles.upgradeText}>Upgrade to Pro →</Text>
+              <TouchableOpacity style={styles.upgradeButton} onPress={() => router.push('/paywall')}>
+                <Text style={styles.upgradeText}>{t.subscription.upgradeCta}</Text>
               </TouchableOpacity>
             )}
           </View>
         </View>
 
-        {/* Level */}
         <View style={styles.section}>
-          <Text style={styles.sectionTitle}>Korean Level</Text>
-          {LEVELS.map((level) => (
+          <Text style={styles.sectionTitle}>{t.settings.levelSection}</Text>
+          {levels.map((level) => (
             <TouchableOpacity
               key={level.id}
               style={[styles.levelRow, profile?.level === level.id && styles.levelRowActive]}
@@ -65,11 +67,10 @@ export default function SettingsScreen() {
           ))}
         </View>
 
-        {/* Account */}
         <View style={styles.section}>
-          <Text style={styles.sectionTitle}>Account</Text>
+          <Text style={styles.sectionTitle}>{t.settings.accountSection}</Text>
           <TouchableOpacity style={styles.menuRow} onPress={restore}>
-            <Text style={styles.menuText}>Restore Purchases</Text>
+            <Text style={styles.menuText}>{t.settings.restorePurchases}</Text>
             <Text style={styles.menuArrow}>›</Text>
           </TouchableOpacity>
         </View>
@@ -80,56 +81,58 @@ export default function SettingsScreen() {
   );
 }
 
-const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: Colors.light.background },
-  scroll: { padding: 20, paddingBottom: 40 },
-  title: { fontSize: 28, fontWeight: '800', color: Colors.light.text, marginBottom: 24 },
-  section: { marginBottom: 28 },
-  sectionTitle: { fontSize: 18, fontWeight: '700', color: Colors.light.text, marginBottom: 12 },
-  card: {
-    backgroundColor: Colors.light.surface,
-    borderRadius: 16,
-    padding: 16,
-    borderWidth: 1,
-    borderColor: Colors.light.border,
-  },
-  tierRow: { flexDirection: 'row', alignItems: 'center', gap: 12, marginBottom: 12 },
-  tierEmoji: { fontSize: 32 },
-  tierLabel: { fontSize: 18, fontWeight: '800', color: Colors.light.text },
-  tierDesc: { fontSize: 13, color: Colors.light.textSecondary },
-  upgradeButton: {
-    backgroundColor: Colors.primary,
-    borderRadius: 12,
-    paddingVertical: 12,
-    alignItems: 'center',
-  },
-  upgradeText: { color: '#FFFFFF', fontSize: 15, fontWeight: '700' },
-  levelRow: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    padding: 16,
-    backgroundColor: Colors.light.surface,
-    borderRadius: 12,
-    borderWidth: 1,
-    borderColor: Colors.light.border,
-    marginBottom: 8,
-  },
-  levelRowActive: { borderColor: Colors.primary, backgroundColor: '#FFF5F5' },
-  levelText: { fontSize: 16, fontWeight: '600', color: Colors.light.text },
-  levelTextActive: { color: Colors.primary },
-  check: { fontSize: 18, color: Colors.primary, fontWeight: '700' },
-  menuRow: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    padding: 16,
-    backgroundColor: Colors.light.surface,
-    borderRadius: 12,
-    borderWidth: 1,
-    borderColor: Colors.light.border,
-  },
-  menuText: { fontSize: 16, color: Colors.light.text },
-  menuArrow: { fontSize: 20, color: Colors.light.textSecondary },
-  version: { fontSize: 12, color: Colors.light.textSecondary, textAlign: 'center', marginTop: 8 },
-});
+function createStyles(colors: ThemeColors) {
+  return StyleSheet.create({
+    container: { flex: 1, backgroundColor: colors.background },
+    scroll: { padding: 20, paddingBottom: 40 },
+    title: { fontSize: 28, fontWeight: '800', color: colors.text, marginBottom: 24 },
+    section: { marginBottom: 28 },
+    sectionTitle: { fontSize: 18, fontWeight: '700', color: colors.text, marginBottom: 12 },
+    card: {
+      backgroundColor: colors.surface,
+      borderRadius: 16,
+      padding: 16,
+      borderWidth: 1,
+      borderColor: colors.border,
+    },
+    tierRow: { flexDirection: 'row', alignItems: 'center', gap: 12, marginBottom: 12 },
+    tierEmoji: { fontSize: 32 },
+    tierLabel: { fontSize: 18, fontWeight: '800', color: colors.text },
+    tierDesc: { fontSize: 13, color: colors.textSecondary },
+    upgradeButton: {
+      backgroundColor: Colors.primary,
+      borderRadius: 12,
+      paddingVertical: 12,
+      alignItems: 'center',
+    },
+    upgradeText: { color: '#FFFFFF', fontSize: 15, fontWeight: '700' },
+    levelRow: {
+      flexDirection: 'row',
+      justifyContent: 'space-between',
+      alignItems: 'center',
+      padding: 16,
+      backgroundColor: colors.surface,
+      borderRadius: 12,
+      borderWidth: 1,
+      borderColor: colors.border,
+      marginBottom: 8,
+    },
+    levelRowActive: { borderColor: Colors.primary, backgroundColor: colors.primaryTint },
+    levelText: { fontSize: 16, fontWeight: '600', color: colors.text },
+    levelTextActive: { color: Colors.primary },
+    check: { fontSize: 18, color: Colors.primary, fontWeight: '700' },
+    menuRow: {
+      flexDirection: 'row',
+      justifyContent: 'space-between',
+      alignItems: 'center',
+      padding: 16,
+      backgroundColor: colors.surface,
+      borderRadius: 12,
+      borderWidth: 1,
+      borderColor: colors.border,
+    },
+    menuText: { fontSize: 16, color: colors.text },
+    menuArrow: { fontSize: 20, color: colors.textSecondary },
+    version: { fontSize: 12, color: colors.textSecondary, textAlign: 'center', marginTop: 8 },
+  });
+}
