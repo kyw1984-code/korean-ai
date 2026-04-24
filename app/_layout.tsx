@@ -1,10 +1,12 @@
 import { useEffect } from 'react';
+import { View } from 'react-native';
 import { Stack } from 'expo-router';
 import { StatusBar } from 'expo-status-bar';
 import { useColorScheme } from 'nativewind';
 import '../global.css';
 import { useUserStore } from '../stores/useUserStore';
 import { requestAdConsent } from '../services/admobService';
+import OfflineBanner from '../components/OfflineBanner';
 
 export default function RootLayout() {
   const { colorScheme } = useColorScheme();
@@ -17,8 +19,9 @@ export default function RootLayout() {
   }, [initProfile]);
 
   return (
-    <>
+    <View style={{ flex: 1 }}>
       <StatusBar style={colorScheme === 'dark' ? 'light' : 'dark'} />
+      <OfflineBanner />
       <Stack screenOptions={{ headerShown: false }}>
         <Stack.Screen name="index" />
         <Stack.Screen name="onboarding" />
@@ -29,6 +32,6 @@ export default function RootLayout() {
         />
         <Stack.Screen name="paywall" options={{ presentation: 'modal' }} />
       </Stack>
-    </>
+    </View>
   );
 }

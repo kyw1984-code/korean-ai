@@ -1,10 +1,11 @@
-import { useMemo } from 'react';
-import { View, Text, ScrollView, StyleSheet, TouchableOpacity } from 'react-native';
+import { useMemo, useState } from 'react';
+import { View, Text, ScrollView, StyleSheet, TouchableOpacity, Modal } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useRouter } from 'expo-router';
 import { useUserStore } from '../../stores/useUserStore';
 import { useConversationStore } from '../../stores/useConversationStore';
 import { useSubscriptionStore } from '../../stores/useSubscriptionStore';
+import { useVocabStore } from '../../stores/useVocabStore';
 import { useThemeColors, type ThemeColors } from '../../hooks/useThemeColors';
 import { useTranslation } from '../../hooks/useTranslation';
 import type { ConversationSession } from '../../types';
@@ -52,10 +53,13 @@ export default function ProgressScreen() {
   const profile = useUserStore((s) => s.profile);
   const sessionHistory = useConversationStore((s) => s.sessionHistory);
   const isPro = useSubscriptionStore((s) => s.isPro());
+  const { entries: vocabEntries, removeWord } = useVocabStore();
   const colors = useThemeColors();
   const t = useTranslation();
   const router = useRouter();
   const styles = useMemo(() => createStyles(colors), [colors]);
+  const [activeTab, setActiveTab] = useState<'progress' | 'vocab'>('progress');
+  const [replaySession, setReplaySession] = useState<ConversationSession | null>(null);
 
   const totalSessions = sessionHistory.length;
   const totalMinutes = sessionHistory.reduce((acc, s) => {
@@ -67,8 +71,50 @@ export default function ProgressScreen() {
 
   return (
     <SafeAreaView style={styles.container}>
+      <View style={styles.tabRow}>
+        <TouchableOpacity
+          style={[styles.tab, activeTab === 'progress' && styles.tabActive]}
+          onPress={() => setActiveTab('progress')}
+        >
+          <Text style={[styles.tabText, activeTab === 'progress' && styles.tabTextActive]}>
+            📊 {t.progress.title}
+          </Text>
+        </TouchableOpacity>
+        <TouchableOpacity
+          style={[styles.tab, activeTab === 'vocab' && styles.tabActive]}
+          onPress={() => setActiveTab('vocab')}
+        >
+          <Text style={[styles.tabText, activeTab === 'vocab' && styles.tabTextActive]}>
+            📖 단어장 {vocabEntries.length > 0 ? `(${vocabEntries.length})` : ''}
+          </Text>
+        </TouchableOpacity>
+      </View>
+
+      {activeTab === 'vocab' ? (
+        <ScrollView contentContainerStyle={styles.scroll}>
+          {vocabEntries.length === 0 ? (
+            <View style={styles.emptyState}>
+              <Text style={styles.emptyEmoji}>📖</Text>
+              <Text style={styles.emptyText}>AI 메시지를 길게 누르면{'\n'}단어를 저장할 수 있어요!</Text>
+            </View>
+          ) : (
+            vocabEntries.map((entry) => (
+              <View key={entry.id} style={styles.vocabCard}>
+                <View style={styles.vocabInfo}>
+                  <Text style={styles.vocabKorean}>{entry.korean}</Text>
+                  <Text style={styles.vocabDate}>
+                    {new Date(entry.savedAt).toLocaleDateString()}
+                  </Text>
+                </View>
+                <TouchableOpacity onPress={() => removeWord(entry.id)} style={styles.vocabDelete}>
+                  <Text style={styles.vocabDeleteText}>✕</Text>
+                </TouchableOpacity>
+              </View>
+            ))
+          )}
+        </ScrollView>
+      ) : (
       <ScrollView contentContainerStyle={styles.scroll}>
-        <Text style={styles.title}>{t.progress.title}</Text>
 
         {/* Streak banner */}
         <View style={styles.streakBanner}>
@@ -143,7 +189,7 @@ export default function ProgressScreen() {
           <View style={styles.section}>
             <Text style={styles.sectionTitle}>{t.progress.recentSessions}</Text>
             {sessionHistory.slice(0, 5).map((session) => (
-              <View key={session.id} style={styles.sessionCard}>
+              <TouchableOpacity key={session.id} style={styles.sessionCard} onPress={() => setReplaySession(session)}>
                 <Text style={styles.sessionEmoji}>{session.scenario.emoji}</Text>
                 <View style={styles.sessionInfo}>
                   <Text style={styles.sessionTitle}>{session.scenario.titleEn}</Text>
@@ -154,7 +200,7 @@ export default function ProgressScreen() {
                       : t.progress.inProgress}
                   </Text>
                 </View>
-              </View>
+              </TouchableOpacity>
             ))}
           </View>
         )}
@@ -166,6 +212,30 @@ export default function ProgressScreen() {
           </View>
         )}
       </ScrollView>
+      )}
+
+      {/* Session replay modal */}
+      <Modal visible={replaySession !== null} animationType="slide" onRequestClose={() => setReplaySession(null)}>
+        <SafeAreaView style={styles.container}>
+          <View style={styles.modalHeader}>
+            <Text style={styles.modalTitle}>
+              {replaySession?.scenario.emoji} {replaySession?.scenario.titleEn}
+            </Text>
+            <TouchableOpacity onPress={() => setReplaySession(null)} style={styles.modalClose}>
+              <Text style={styles.modalCloseText}>✕</Text>
+            </TouchableOpacity>
+          </View>
+          <ScrollView contentContainerStyle={styles.scroll}>
+            {replaySession?.messages.map((msg) => (
+              <View key={msg.id} style={[styles.replayBubble, msg.role === 'user' ? styles.replayUser : styles.replayAssistant]}>
+                <Text style={[styles.replayText, msg.role === 'user' ? styles.replayTextUser : styles.replayTextAssistant]}>
+                  {msg.content}
+                </Text>
+              </View>
+            ))}
+          </ScrollView>
+        </SafeAreaView>
+      </Modal>
     </SafeAreaView>
   );
 }
@@ -252,5 +322,59 @@ function createStyles(colors: ThemeColors) {
     emptyState: { alignItems: 'center', paddingTop: 60 },
     emptyEmoji: { fontSize: 48, marginBottom: 16 },
     emptyText: { fontSize: 16, color: colors.textSecondary, textAlign: 'center' },
+    tabRow: {
+      flexDirection: 'row',
+      borderBottomWidth: 1,
+      borderBottomColor: colors.border,
+      backgroundColor: colors.background,
+    },
+    tab: {
+      flex: 1,
+      paddingVertical: 14,
+      alignItems: 'center',
+    },
+    tabActive: {
+      borderBottomWidth: 2,
+      borderBottomColor: '#ff6b6b',
+    },
+    tabText: { fontSize: 14, fontWeight: '600', color: colors.textSecondary },
+    tabTextActive: { color: '#ff6b6b' },
+    vocabCard: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      backgroundColor: colors.surface,
+      borderRadius: 14,
+      borderWidth: 1,
+      borderColor: colors.border,
+      padding: 14,
+      marginBottom: 8,
+    },
+    vocabInfo: { flex: 1 },
+    vocabKorean: { fontSize: 16, fontWeight: '700', color: colors.text },
+    vocabDate: { fontSize: 12, color: colors.textSecondary, marginTop: 2 },
+    vocabDelete: { padding: 6 },
+    vocabDeleteText: { fontSize: 16, color: colors.textSecondary },
+    modalHeader: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      justifyContent: 'space-between',
+      padding: 20,
+      borderBottomWidth: 1,
+      borderBottomColor: colors.border,
+    },
+    modalTitle: { fontSize: 17, fontWeight: '700', color: colors.text, flex: 1 },
+    modalClose: { padding: 4 },
+    modalCloseText: { fontSize: 18, color: colors.textSecondary },
+    replayBubble: {
+      maxWidth: '80%',
+      borderRadius: 16,
+      padding: 12,
+      marginBottom: 8,
+    },
+    replayUser: { alignSelf: 'flex-end', backgroundColor: '#ff6b6b' },
+    replayAssistant: { alignSelf: 'flex-start', backgroundColor: colors.surface, borderWidth: 1, borderColor: colors.border },
+    replayText: { fontSize: 14, lineHeight: 20 },
+    replayTextUser: { color: '#FFFFFF' },
+    replayTextAssistant: { color: colors.text },
   });
 }

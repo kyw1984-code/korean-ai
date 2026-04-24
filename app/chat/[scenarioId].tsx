@@ -11,6 +11,7 @@ import {
   Alert,
 } from 'react-native';
 import { router, useLocalSearchParams } from 'expo-router';
+import * as StoreReview from 'expo-store-review';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { SCENARIOS } from '../../constants/Scenarios';
 import { useConversationStore } from '../../stores/useConversationStore';
@@ -22,6 +23,7 @@ import { Colors } from '../../constants/Colors';
 import { Config } from '../../constants/Config';
 import { useThemeColors, type ThemeColors } from '../../hooks/useThemeColors';
 import { useTranslation } from '../../hooks/useTranslation';
+import { useVocabStore } from '../../stores/useVocabStore';
 import { Message } from '../../types';
 
 export default function ChatScreen() {
@@ -49,8 +51,10 @@ export default function ChatScreen() {
   const addMinutesUsed = useUserStore((s) => s.addMinutesUsed);
   const incrementSessions = useUserStore((s) => s.incrementSessions);
   const recordPracticeDay = useUserStore((s) => s.recordPracticeDay);
+  const sessionHistory = useConversationStore((s) => s.sessionHistory);
   const { isPro } = useSubscriptionStore();
   const { isLoaded: adLoaded, isLoading: adLoading, showAd } = useRewardedAd();
+  const { saveWord, hasWord } = useVocabStore();
 
   useEffect(() => {
     if (!scenario) {
@@ -154,12 +158,19 @@ export default function ChatScreen() {
     if (!shown) Alert.alert(t.errors.adNotReady);
   }
 
-  function handleEndSession() {
+  async function handleEndSession() {
     const minutesUsed = Math.ceil((Date.now() - (currentSession?.startedAt ?? Date.now())) / 60000);
     addMinutesUsed(minutesUsed);
     incrementSessions();
     recordPracticeDay();
     endSession();
+
+    // 3번째, 10번째, 30번째 세션 완료 시 리뷰 요청
+    const completedCount = sessionHistory.length + 1;
+    if ([3, 10, 30].includes(completedCount) && await StoreReview.hasAction()) {
+      await StoreReview.requestReview();
+    }
+
     router.back();
   }
 
@@ -194,7 +205,20 @@ export default function ChatScreen() {
         contentContainerStyle={styles.messageList}
         onContentSizeChange={() => flatListRef.current?.scrollToEnd({ animated: true })}
         renderItem={({ item }) => (
-          <MessageBubble message={item} colors={colors} feedbackLabel={t.chat.feedbackLabel} />
+          <MessageBubble
+            message={item}
+            colors={colors}
+            feedbackLabel={t.chat.feedbackLabel}
+            onLongPress={item.role === 'assistant' ? () => {
+              const korean = item.content.split('\n')[0].trim();
+              if (hasWord(korean)) {
+                Alert.alert('이미 저장된 표현이에요!');
+                return;
+              }
+              saveWord(korean, '', scenarioId ?? '');
+              Alert.alert('단어장에 저장됐어요! 📖');
+            } : undefined}
+          />
         )}
         ListFooterComponent={isLoading ? <TypingIndicator colors={colors} /> : null}
       />
@@ -232,10 +256,12 @@ function MessageBubble({
   message,
   colors,
   feedbackLabel,
+  onLongPress,
 }: {
   message: Message;
   colors: ThemeColors;
   feedbackLabel: string;
+  onLongPress?: () => void;
 }) {
   const styles = useMemo(() => createStyles(colors), [colors]);
   const isUser = message.role === 'user';
@@ -247,11 +273,15 @@ function MessageBubble({
     <View style={[styles.bubbleWrapper, isUser ? styles.bubbleRight : styles.bubbleLeft]}>
       {!isUser && <Text style={styles.avatar}>👩‍🏫</Text>}
       <View style={styles.bubbleColumn}>
-        <View style={[styles.bubble, isUser ? styles.bubbleUser : styles.bubbleAssistant]}>
+        <TouchableOpacity
+          onLongPress={onLongPress}
+          activeOpacity={onLongPress ? 0.7 : 1}
+          style={[styles.bubble, isUser ? styles.bubbleUser : styles.bubbleAssistant]}
+        >
           <Text style={[styles.bubbleText, isUser ? styles.bubbleTextUser : styles.bubbleTextAssistant]}>
             {mainText}
           </Text>
-        </View>
+        </TouchableOpacity>
         {feedbackText && (
           <View style={styles.feedbackCard}>
             <Text style={styles.feedbackTitle}>{feedbackLabel}</Text>

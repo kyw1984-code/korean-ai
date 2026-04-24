@@ -12,6 +12,12 @@ import { useTranslation } from '../../hooks/useTranslation';
 
 const LEVEL_FILTERS: Array<ScenarioLevel | 'all'> = ['all', 'beginner', 'intermediate', 'advanced'];
 
+function getDailyChallenge(): Scenario {
+  const seed = parseInt(new Date().toISOString().split('T')[0].replace(/-/g, ''), 10);
+  const index = seed % SCENARIOS.length;
+  return SCENARIOS[index];
+}
+
 export default function HomeScreen() {
   const [activeFilter, setActiveFilter] = useState<ScenarioLevel | 'all'>('all');
   const profile = useUserStore((s) => s.profile);
@@ -25,6 +31,7 @@ export default function HomeScreen() {
     ? Infinity
     : usageToday.adsWatched * Config.freeMinutesPerAd - usageToday.minutesUsed;
   const displayMinutes = isPro() ? '∞' : String(Math.max(0, Math.round(freeMinutes)));
+  const dailyChallenge = useMemo(() => getDailyChallenge(), []);
 
   const filtered = activeFilter === 'all'
     ? SCENARIOS
@@ -52,6 +59,15 @@ export default function HomeScreen() {
           <Text style={styles.timerText}>{displayMinutes} min</Text>
         </View>
       </View>
+
+      {/* 오늘의 챌린지 */}
+      <TouchableOpacity style={styles.challenge} onPress={() => handleScenario(dailyChallenge)}>
+        <View style={styles.challengeLeft}>
+          <Text style={styles.challengeTag}>🎯 오늘의 챌린지</Text>
+          <Text style={styles.challengeTitle}>{dailyChallenge.emoji} {dailyChallenge.titleEn}</Text>
+        </View>
+        <Text style={styles.challengeArrow}>›</Text>
+      </TouchableOpacity>
 
       <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.filterRow}>
         {LEVEL_FILTERS.map((f) => (
@@ -145,6 +161,21 @@ function createStyles(colors: ThemeColors) {
     },
     timerEmoji: { fontSize: 16, marginRight: 4 },
     timerText: { fontSize: 14, fontWeight: '700', color: Colors.primary },
+    challenge: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      marginHorizontal: 20,
+      marginBottom: 12,
+      backgroundColor: Colors.primary + '15',
+      borderRadius: 14,
+      padding: 14,
+      borderWidth: 1,
+      borderColor: Colors.primary + '40',
+    },
+    challengeLeft: { flex: 1 },
+    challengeTag: { fontSize: 12, fontWeight: '700', color: Colors.primary, marginBottom: 4 },
+    challengeTitle: { fontSize: 15, fontWeight: '700', color: colors.text },
+    challengeArrow: { fontSize: 22, color: Colors.primary, fontWeight: '700' },
     filterRow: { paddingHorizontal: 20, paddingBottom: 12, gap: 8 },
     filterChip: {
       paddingHorizontal: 16,
