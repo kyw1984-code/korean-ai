@@ -37,7 +37,7 @@
     "react-native": "0.81.5",
     "react-native-google-mobile-ads": "^16.3.3",
     "react-native-purchases": "^10.0.1",
-    "react-native-reanimated": "^3.10.1",
+    "react-native-reanimated": "~4.1.1",
     "react-native-safe-area-context": "~5.6.0",
     "react-native-screens": "~4.16.0",
     "react-native-web": "^0.21.0",
@@ -50,11 +50,5 @@
     "typescript": "~5.9.2"
   },
   "private": true,
-  "expo": {
-    "install": {
-      "exclude": [
-        "react-native-reanimated"
-      ]
-    }
-  }
+  "expo": {}
 }

@@ -22,3 +22,8 @@ yarn-error.*
 
 expo-env.d.ts
 # @end expo-cli
+# Local build credentials (never commit)
+credentials.json
+fastlane/dist_cert.p12
+fastlane/api_key.json
+fastlane/koreantalk_appstore.mobileprovision
