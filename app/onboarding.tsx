@@ -29,7 +29,7 @@ export default function OnboardingScreen() {
     return (
       <SafeAreaView style={styles.container}>
         <ScrollView contentContainerStyle={styles.scroll} showsVerticalScrollIndicator={false}>
-          <Text style={styles.kdramaEmoji}>🎬</Text>
+          <Text style={styles.kdramaEmoji}>🦉</Text>
           <Text style={styles.title}>{t.onboarding.hook.title}</Text>
           <Text style={styles.subtitle}>{t.onboarding.hook.subtitle}</Text>
 
@@ -39,7 +39,7 @@ export default function OnboardingScreen() {
                 key={i}
                 style={[styles.sampleBubbleRow, msg.role === 'user' ? styles.bubbleRight : styles.bubbleLeft]}
               >
-                {msg.role === 'ai' && <Text style={styles.sampleAvatar}>👩‍🏫</Text>}
+                {msg.role === 'ai' && <Text style={styles.sampleAvatar}>🤖</Text>}
                 <View style={styles.sampleBubbleCol}>
                   <View style={[
                     styles.sampleBubble,
@@ -169,11 +169,17 @@ function createStyles(colors: ThemeColors) {
       padding: 16,
       borderRadius: 16,
       borderWidth: 2,
-      borderColor: colors.border,
+      borderBottomWidth: 5,
+      borderColor: colors.borderStrong,
       backgroundColor: colors.surface,
       marginBottom: 12,
     },
-    levelCardSelected: { borderColor: Colors.primary, backgroundColor: colors.primaryTint },
+    levelCardSelected: { 
+      borderColor: Colors.primary, 
+      backgroundColor: colors.primaryTint,
+      borderBottomWidth: 2,
+      transform: [{ translateY: 3 }],
+    },
     levelEmoji: { fontSize: 32, marginRight: 16 },
     levelText: { flex: 1 },
     levelLabel: { fontSize: 17, fontWeight: '700', color: colors.text, marginBottom: 2 },
@@ -186,12 +192,9 @@ function createStyles(colors: ThemeColors) {
       borderRadius: 16,
       paddingVertical: 18,
       alignItems: 'center',
-      marginTop: 8,
-      shadowColor: Colors.primary,
-      shadowOffset: { width: 0, height: 4 },
-      shadowOpacity: 0.3,
-      shadowRadius: 8,
-      elevation: 6,
+      marginTop: 12,
+      borderBottomWidth: 5,
+      borderColor: Colors.primaryDark,
     },
     ctaText: { color: '#FFFFFF', fontSize: 18, fontWeight: '800' },
     disclaimer: { marginTop: 20, fontSize: 12, color: colors.textSecondary, textAlign: 'center' },

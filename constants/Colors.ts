@@ -1,8 +1,8 @@
 export const Colors = {
   // Brand
-  primary: '#E8325A',
-  primaryDark: '#C4274A',
-  primaryGlow: 'rgba(232, 50, 90, 0.25)',
+  primary: '#1CB0F6',
+  primaryDark: '#1899D6',
+  primaryGlow: 'rgba(28, 176, 246, 0.25)',
 
   // Premium accents
   gold: '#F0C040',
@@ -19,10 +19,10 @@ export const Colors = {
     border: 'rgba(0,0,0,0.07)',
     borderStrong: 'rgba(0,0,0,0.12)',
     card: '#FFFFFF',
-    primaryTint: 'rgba(232,50,90,0.06)',
+    primaryTint: 'rgba(28, 176, 246, 0.10)',
     feedbackBg: 'rgba(240,192,64,0.08)',
     feedbackText: '#6B4C00',
-    warningBg: 'rgba(232,50,90,0.08)',
+    warningBg: 'rgba(28, 176, 246, 0.10)',
     lockBg: 'rgba(240,192,64,0.10)',
     lockText: '#6B4C00',
     overlay: 'rgba(0,0,0,0.04)',
@@ -38,10 +38,10 @@ export const Colors = {
     border: 'rgba(255,255,255,0.06)',
     borderStrong: 'rgba(255,255,255,0.12)',
     card: '#14141F',
-    primaryTint: 'rgba(232,50,90,0.12)',
+    primaryTint: 'rgba(28, 176, 246, 0.15)',
     feedbackBg: 'rgba(240,192,64,0.08)',
     feedbackText: '#F0D080',
-    warningBg: 'rgba(232,50,90,0.12)',
+    warningBg: 'rgba(28, 176, 246, 0.15)',
     lockBg: 'rgba(240,192,64,0.10)',
     lockText: '#F0D080',
     overlay: 'rgba(255,255,255,0.03)',

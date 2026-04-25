@@ -11,7 +11,7 @@
     "splash": {
       "image": "./assets/splash-icon.png",
       "resizeMode": "contain",
-      "backgroundColor": "#FF6B6B"
+      "backgroundColor": "#1CB0F6"
     },
     "ios": {
       "supportsTablet": false,
@@ -24,7 +24,7 @@
     "android": {
       "adaptiveIcon": {
         "foregroundImage": "./assets/adaptive-icon.png",
-        "backgroundColor": "#FF6B6B"
+        "backgroundColor": "#1CB0F6"
       },
       "package": "com.shoktree.koreantalk",
       "versionCode": 1,

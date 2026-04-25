@@ -14,17 +14,21 @@ export const PACKAGE_PRO_YEARLY = '$rc_annual';
 export const PACKAGE_AD_FREE = '$rc_lifetime';
 
 export async function initRevenueCat(): Promise<void> {
-  if (__DEV__) {
-    Purchases.setLogLevel(LOG_LEVEL.DEBUG);
+  try {
+    if (__DEV__) {
+      Purchases.setLogLevel(LOG_LEVEL.DEBUG);
+    }
+
+    const apiKey = Platform.OS === 'ios'
+      ? Config.revenueCatApiKey.ios
+      : Config.revenueCatApiKey.android;
+
+    if (!apiKey) return;
+
+    await Purchases.configure({ apiKey });
+  } catch {
+    // Expo Go에서 native store 미지원 — 무시하고 진행
   }
-
-  const apiKey = Platform.OS === 'ios'
-    ? Config.revenueCatApiKey.ios
-    : Config.revenueCatApiKey.android;
-
-  if (!apiKey) return; // 키 없으면 스킵 (Expo Go 환경 등)
-
-  await Purchases.configure({ apiKey });
 }
 
 export async function getOfferings(): Promise<PurchasesOffering | null> {
