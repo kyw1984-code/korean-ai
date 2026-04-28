@@ -1,5 +1,5 @@
 import { useMemo, useState } from 'react';
-import { View, Text, ScrollView, TouchableOpacity, StyleSheet, ActivityIndicator } from 'react-native';
+import { View, Text, ScrollView, TouchableOpacity, StyleSheet, ActivityIndicator, Linking } from 'react-native';
 import { router } from 'expo-router';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useSubscriptionStore } from '../stores/useSubscriptionStore';
@@ -110,6 +110,16 @@ export default function PaywallScreen() {
         </TouchableOpacity>
 
         <Text style={styles.legalText}>자동 갱신 · 언제든 취소 가능</Text>
+
+        <View style={styles.legalLinksRow}>
+          <TouchableOpacity onPress={() => Linking.openURL('https://kyw1984-code.github.io/korean-ai/privacy-policy.html')}>
+            <Text style={styles.legalLink}>Privacy Policy</Text>
+          </TouchableOpacity>
+          <Text style={styles.legalLinkSep}>·</Text>
+          <TouchableOpacity onPress={() => Linking.openURL('https://kyw1984-code.github.io/korean-ai/terms-of-use.html')}>
+            <Text style={styles.legalLink}>Terms of Use</Text>
+          </TouchableOpacity>
+        </View>
 
         {/* Divider */}
         <View style={styles.dividerRow}>
@@ -277,7 +287,10 @@ function createStyles(colors: ThemeColors) {
     ctaText: { color: '#FFFFFF', fontSize: 18, fontWeight: '800', letterSpacing: -0.2 },
     ctaSubtext: { color: 'rgba(255,255,255,0.75)', fontSize: 12, marginTop: 3 },
 
-    legalText: { fontSize: 11, color: colors.textTertiary, textAlign: 'center', marginBottom: 28 },
+    legalText: { fontSize: 11, color: colors.textTertiary, textAlign: 'center', marginBottom: 8 },
+    legalLinksRow: { flexDirection: 'row', justifyContent: 'center', alignItems: 'center', gap: 8, marginBottom: 24 },
+    legalLink: { fontSize: 11, color: colors.textTertiary, textDecorationLine: 'underline' },
+    legalLinkSep: { fontSize: 11, color: colors.textTertiary },
 
     dividerRow: { flexDirection: 'row', alignItems: 'center', gap: 12, marginBottom: 22 },
     dividerLine: { flex: 1, height: 0.5, backgroundColor: colors.border },

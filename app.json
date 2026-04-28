@@ -16,7 +16,7 @@
     "ios": {
       "supportsTablet": false,
       "bundleIdentifier": "com.shoktree.koreantalk",
-      "buildNumber": "1",
+      "buildNumber": "2",
       "infoPlist": {
         "NSUserNotificationsUsageDescription": "We send daily reminders to help you maintain your Korean practice streak.",
         "ITSAppUsesNonExemptEncryption": false

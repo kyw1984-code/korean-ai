@@ -30,11 +30,19 @@ platform :ios do
   desc "Upload binary to TestFlight (internal testers only)"
   lane :beta do
     preflight
+    api_key = app_store_connect_api_key(
+      key_id:       "RWM8WTKAA2",
+      issuer_id:    "ac7c83b3-1116-4a32-b237-ea15e8b87bed",
+      key_filepath: File.expand_path("../fastlane/AuthKey_RWM8WTKAA2.p8"),
+      duration:     1200,
+      in_house:     false,
+    )
     pilot(
-      app_identifier:             "com.shoktree.koreantalk",
-      ipa:                        ENV["IPA_PATH"],
+      api_key:                          api_key,
+      app_identifier:                   "com.shoktree.koreantalk",
+      ipa:                              ENV["IPA_PATH"],
       skip_waiting_for_build_processing: true,
-      distribute_external:        false,
+      distribute_external:              false,
     )
     UI.success("Uploaded to TestFlight. Share with internal testers before submission.")
   end
